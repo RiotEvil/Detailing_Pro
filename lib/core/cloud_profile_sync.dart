@@ -268,4 +268,20 @@ class CloudProfileSync {
           };
         });
   }
+
+  /// Syncs the studio's booking schedule to Firestore so that the
+  /// [getBookingAvailability] Cloud Function can use real working hours.
+  static Future<void> syncBookingSchedule(Map<String, dynamic> schedule) async {
+    if (!_firebaseReady) return;
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+        'bookingSchedule': schedule,
+        'updatedAt': FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint('[CloudProfileSync] syncBookingSchedule error: $e');
+    }
+  }
 }

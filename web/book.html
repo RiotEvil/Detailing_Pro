@@ -69,6 +69,7 @@
         }
 
         input,
+        select,
         textarea,
         button {
             width: 100%;
@@ -220,6 +221,8 @@
 
             <div class="full">
                 <label for="service" id="serviceLabel">Service</label>
+                <!-- Populated dynamically; falls back to text input if no services found -->
+                <select id="serviceSelect" name="service" required style="display:none"></select>
                 <input id="service" name="service" placeholder="Polishing / Ceramic / Full detailing" required />
             </div>
 
@@ -263,6 +266,9 @@
             collection,
             addDoc,
             serverTimestamp,
+            getDocs,
+            query,
+            orderBy,
         } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js';
         // ── EmailJS ─────────────────────────────────────────────────────────
         // Free email confirmations (200/month): https://www.emailjs.com
@@ -472,6 +478,58 @@
         const timeSlotsEl = document.getElementById('timeSlots');
         const timeHintEl = document.getElementById('timeHint');
         const serviceInput = document.getElementById('service');
+        const serviceSelect = document.getElementById('serviceSelect');
+
+        // Load studio services from Firestore and populate dropdown.
+        // Falls back silently to the text input if nothing is found.
+        async function loadServices() {
+            if (!masterUid) return;
+            try {
+                const orgId = 'org_' + masterUid;
+                const servicesRef = collection(db, 'organizations', orgId, 'services');
+                const snap = await getDocs(query(servicesRef, orderBy('name')));
+                const services = [];
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    if (d.name) services.push(d);
+                });
+                if (services.length === 0) return;
+
+                // Populate select and switch to dropdown mode
+                const placeholder = document.createElement('option');
+                placeholder.value = '';
+                placeholder.textContent = tr('servicePlaceholder', '— Select service —');
+                placeholder.disabled = true;
+                placeholder.selected = true;
+                serviceSelect.appendChild(placeholder);
+
+                services.forEach(s => {
+                    const opt = document.createElement('option');
+                    const price = s.price != null ? ` — ${s.price} ${s.currency || ''}`.trimEnd() : '';
+                    const duration = s.durationMinutes ? ` (${s.durationMinutes} min)` : '';
+                    opt.value = s.name + price + duration;
+                    opt.textContent = s.name + price + duration;
+                    if (s.durationMinutes) opt.dataset.minutes = s.durationMinutes;
+                    serviceSelect.appendChild(opt);
+                });
+
+                // Show select, hide text input
+                serviceSelect.style.display = '';
+                serviceInput.style.display = 'none';
+                serviceInput.removeAttribute('required');
+                serviceSelect.setAttribute('required', '');
+
+                // Keep serviceInput.value in sync so selectedServiceMinutes() still works
+                serviceSelect.addEventListener('change', () => {
+                    const selected = serviceSelect.options[serviceSelect.selectedIndex];
+                    serviceInput.value = selected ? selected.value : '';
+                });
+            } catch (_) {
+                // Firestore unavailable or rules denied — silently keep text input
+            }
+        }
+
+        loadServices();
 
         const AVAILABILITY_URL = 'https://europe-west3-detailing-pro.cloudfunctions.net/getBookingAvailability';
         const DEFAULT_SERVICE_MINUTES = Number(params.get('serviceMinutes')) > 0

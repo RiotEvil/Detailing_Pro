@@ -9,11 +9,15 @@
 		"source": "functions"
 	},
 	"hosting": {
-		"public": "web",
+		"public": "build/web",
 		"ignore": [
 			"firebase.json",
 			"**/.*",
 			"**/node_modules/**"
+		],
+		"rewrites": [
+			{ "source": "/book.html", "destination": "/book.html" },
+			{ "source": "**", "destination": "/index.html" }
 		]
 	},
 	"flutter": {

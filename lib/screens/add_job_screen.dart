@@ -761,6 +761,7 @@ class _AddJobScreenState extends State<AddJobScreen> {
     );
 
     if (selected != null) {
+      if (!mounted) return;
       setState(() {
         _scheduledDate = selected;
       });
@@ -774,6 +775,7 @@ class _AddJobScreenState extends State<AddJobScreen> {
     );
 
     if (selected != null) {
+      if (!mounted) return;
       setState(() {
         _scheduledTime = selected;
       });

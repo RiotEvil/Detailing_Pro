@@ -263,6 +263,23 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 );
               },
             ),
+            const SizedBox(height: 8),
+            _ActionButton(
+              icon: Icons.schedule,
+              label: 'Working Hours',
+              onTap: () {
+                if (!AccessGuard.canUseOnlineBooking()) {
+                  AccessGuard.showUpgradePrompt(
+                    context,
+                    title: SubscriptionTexts.bookingProTitle(context),
+                    message: SubscriptionTexts.bookingProMessage(context),
+                    requiredPlan: AppPlan.pro,
+                  );
+                  return;
+                }
+                _showWorkingHoursDialog(context);
+              },
+            ),
 
             const SizedBox(height: 24),
             _SectionHeader(title: l10n.invoiceCompanyDataTitle.toUpperCase()),
@@ -726,6 +743,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Future<void> _showWorkingHoursDialog(BuildContext context) async {
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => const _WorkingHoursDialog(),
+    );
+  }
+
   String _invoicePrimaryIdLabel(String locale) {
     switch (locale) {
       case 'pl':
@@ -875,6 +899,345 @@ class _ActionButton extends StatelessWidget {
       onPressed: onTap,
       icon: Icon(icon, color: AppColors.primary),
       label: Text(label, style: const TextStyle(fontSize: 13)),
+    );
+  }
+}
+
+// ── Working Hours Editor ────────────────────────────────────────────────────
+
+class _WorkingHoursDialog extends StatefulWidget {
+  const _WorkingHoursDialog();
+
+  @override
+  State<_WorkingHoursDialog> createState() => _WorkingHoursDialogState();
+}
+
+class _WorkingHoursDialogState extends State<_WorkingHoursDialog> {
+  // Display order: Mon(1)…Sat(6), Sun(0)
+  static const _dayOrder = [1, 2, 3, 4, 5, 6, 0];
+  static const _dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  late Map<int, bool> _enabled;
+  late Map<int, TimeOfDay> _start;
+  late Map<int, TimeOfDay> _end;
+  late Map<int, bool> _hasBreak;
+  late Map<int, TimeOfDay> _breakStart;
+  late Map<int, TimeOfDay> _breakEnd;
+  int _slotMinutes = 60;
+  int _minNoticeMinutes = 120;
+  bool _saving = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFromHive();
+  }
+
+  void _loadFromHive() {
+    final raw = Hive.box(HiveBoxes.settings).get('bookingSchedule');
+    final schedule = raw is Map ? Map<String, dynamic>.from(raw) : null;
+
+    _slotMinutes = (schedule?['slotMinutes'] as num?)?.toInt() ?? 60;
+    _minNoticeMinutes = (schedule?['minNoticeMinutes'] as num?)?.toInt() ?? 120;
+
+    final daysRaw = schedule != null && schedule['days'] is Map
+        ? Map<String, dynamic>.from(schedule['days'] as Map)
+        : <String, dynamic>{};
+
+    _enabled = {};
+    _start = {};
+    _end = {};
+    _hasBreak = {};
+    _breakStart = {};
+    _breakEnd = {};
+
+    const defaultStart = {
+      1: '09:00', 2: '09:00', 3: '09:00',
+      4: '09:00', 5: '09:00', 6: '10:00', 0: '09:00',
+    };
+    const defaultEnd = {
+      1: '18:00', 2: '18:00', 3: '18:00',
+      4: '18:00', 5: '18:00', 6: '15:00', 0: '18:00',
+    };
+    // By default Mon-Fri enabled, Sat enabled, Sun closed
+    const defaultEnabled = {
+      1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 0: false,
+    };
+
+    for (final day in _dayOrder) {
+      final key = day.toString();
+      final dayData = daysRaw[key];
+
+      if (dayData == null) {
+        // null means closed (or not set yet)
+        _enabled[day] = schedule != null ? false : defaultEnabled[day]!;
+        _start[day] = _parseTime(defaultStart[day]!);
+        _end[day] = _parseTime(defaultEnd[day]!);
+        // Default break for weekdays
+        _hasBreak[day] = day >= 1 && day <= 5;
+        _breakStart[day] = const TimeOfDay(hour: 13, minute: 0);
+        _breakEnd[day] = const TimeOfDay(hour: 14, minute: 0);
+      } else {
+        final d = Map<String, dynamic>.from(dayData as Map);
+        _enabled[day] = true;
+        _start[day] = _parseTime(d['start'] as String? ?? defaultStart[day]!);
+        _end[day] = _parseTime(d['end'] as String? ?? defaultEnd[day]!);
+        final breaks = d['breaks'];
+        if (breaks is List && breaks.isNotEmpty) {
+          final b = Map<String, dynamic>.from(breaks[0] as Map);
+          _hasBreak[day] = true;
+          _breakStart[day] = _parseTime(b['start'] as String? ?? '13:00');
+          _breakEnd[day] = _parseTime(b['end'] as String? ?? '14:00');
+        } else {
+          _hasBreak[day] = false;
+          _breakStart[day] = const TimeOfDay(hour: 13, minute: 0);
+          _breakEnd[day] = const TimeOfDay(hour: 14, minute: 0);
+        }
+      }
+    }
+  }
+
+  TimeOfDay _parseTime(String s) {
+    final parts = s.split(':');
+    return TimeOfDay(
+      hour: int.parse(parts[0]),
+      minute: int.parse(parts[1]),
+    );
+  }
+
+  String _fmtTime(TimeOfDay t) =>
+      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+
+  Map<String, dynamic> _buildSchedule() {
+    final days = <String, dynamic>{};
+    for (final day in _dayOrder) {
+      if (!(_enabled[day] ?? false)) {
+        days[day.toString()] = null;
+      } else {
+        final breaks = <Map<String, String>>[];
+        if (_hasBreak[day] == true) {
+          breaks.add({
+            'start': _fmtTime(_breakStart[day]!),
+            'end': _fmtTime(_breakEnd[day]!),
+          });
+        }
+        days[day.toString()] = {
+          'start': _fmtTime(_start[day]!),
+          'end': _fmtTime(_end[day]!),
+          'breaks': breaks,
+        };
+      }
+    }
+    return {
+      'slotMinutes': _slotMinutes,
+      'minNoticeMinutes': _minNoticeMinutes,
+      'days': days,
+    };
+  }
+
+  Future<void> _save() async {
+    setState(() => _saving = true);
+    final schedule = _buildSchedule();
+    await Hive.box(HiveBoxes.settings).put('bookingSchedule', schedule);
+    await CloudProfileSync.syncBookingSchedule(schedule);
+    if (mounted) Navigator.pop(context);
+  }
+
+  Future<void> _pickTime(int day, bool isStart) async {
+    final initial = isStart ? _start[day]! : _end[day]!;
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: initial,
+    );
+    if (picked != null && mounted) {
+      setState(() {
+        if (isStart) {
+          _start[day] = picked;
+        } else {
+          _end[day] = picked;
+        }
+      });
+    }
+  }
+
+  Future<void> _pickBreakTime(int day, bool isStart) async {
+    final initial = isStart ? _breakStart[day]! : _breakEnd[day]!;
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: initial,
+    );
+    if (picked != null && mounted) {
+      setState(() {
+        if (isStart) {
+          _breakStart[day] = picked;
+        } else {
+          _breakEnd[day] = picked;
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Working Hours'),
+      contentPadding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Slot', style: TextStyle(fontSize: 12)),
+                      DropdownButton<int>(
+                        value: _slotMinutes,
+                        isExpanded: true,
+                        items: const [
+                          DropdownMenuItem(value: 30, child: Text('30 min')),
+                          DropdownMenuItem(value: 60, child: Text('60 min')),
+                          DropdownMenuItem(value: 90, child: Text('90 min')),
+                        ],
+                        onChanged: (v) => setState(() => _slotMinutes = v!),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('Min notice', style: TextStyle(fontSize: 12)),
+                      DropdownButton<int>(
+                        value: _minNoticeMinutes,
+                        isExpanded: true,
+                        items: const [
+                          DropdownMenuItem(value: 60, child: Text('1 hour')),
+                          DropdownMenuItem(value: 120, child: Text('2 hours')),
+                          DropdownMenuItem(
+                            value: 1440,
+                            child: Text('24 hours'),
+                          ),
+                        ],
+                        onChanged: (v) =>
+                            setState(() => _minNoticeMinutes = v!),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const Divider(height: 16),
+            Flexible(
+              child: ListView.builder(
+                shrinkWrap: true,
+                itemCount: _dayOrder.length,
+                itemBuilder: (_, i) =>
+                    _buildDayRow(_dayOrder[i], _dayNames[i]),
+              ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _saving ? null : () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: _saving ? null : _save,
+          child: _saving
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Text('Save'),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDayRow(int day, String name) {
+    final enabled = _enabled[day] ?? false;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Switch(
+              value: enabled,
+              onChanged: (v) => setState(() => _enabled[day] = v),
+            ),
+            Text(name, style: const TextStyle(fontWeight: FontWeight.w600)),
+            if (enabled) ...[
+              const Spacer(),
+              TextButton(
+                onPressed: () => _pickTime(day, true),
+                child: Text(_fmtTime(_start[day]!)),
+              ),
+              const Text('–'),
+              TextButton(
+                onPressed: () => _pickTime(day, false),
+                child: Text(_fmtTime(_end[day]!)),
+              ),
+            ],
+          ],
+        ),
+        if (enabled)
+          Padding(
+            padding: const EdgeInsets.only(left: 48, bottom: 4),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: Checkbox(
+                    value: _hasBreak[day] ?? false,
+                    onChanged: (v) => setState(() => _hasBreak[day] = v!),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                const Text('Break', style: TextStyle(fontSize: 12)),
+                if (_hasBreak[day] == true) ...[
+                  const SizedBox(width: 8),
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      minimumSize: const Size(0, 0),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    onPressed: () => _pickBreakTime(day, true),
+                    child: Text(
+                      _fmtTime(_breakStart[day]!),
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ),
+                  const Text('–', style: TextStyle(fontSize: 12)),
+                  TextButton(
+                    style: TextButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      minimumSize: const Size(0, 0),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                    onPressed: () => _pickBreakTime(day, false),
+                    child: Text(
+                      _fmtTime(_breakEnd[day]!),
+                      style: const TextStyle(fontSize: 12),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        const Divider(height: 4),
+      ],
     );
   }
 }

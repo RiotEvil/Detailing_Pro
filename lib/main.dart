@@ -205,9 +205,21 @@ class _AuthGateState extends State<AuthGate> {
 
       if (user == null) {
         await _clearLocalAccessProfile(clearAuthUid: true);
-        unawaited(AppDataService.stopCloudSync());
-        unawaited(OnlineBookingService.stop());
-        unawaited(RevenueCatService.logOut());
+        unawaited(
+          AppDataService.stopCloudSync().catchError(
+            (e) => debugPrint('[AuthGate] stopCloudSync error: $e'),
+          ),
+        );
+        unawaited(
+          OnlineBookingService.stop().catchError(
+            (e) => debugPrint('[AuthGate] OnlineBookingService.stop error: $e'),
+          ),
+        );
+        unawaited(
+          RevenueCatService.logOut().catchError(
+            (e) => debugPrint('[AuthGate] RevenueCatService.logOut error: $e'),
+          ),
+        );
         return;
       }
 
@@ -218,10 +230,24 @@ class _AuthGateState extends State<AuthGate> {
 
       await _settingsBox.put('authUid', user.uid);
 
-      unawaited(OnlineBookingService.start());
+      unawaited(
+        OnlineBookingService.start().catchError(
+          (e) => debugPrint('[AuthGate] OnlineBookingService.start error: $e'),
+        ),
+      );
       // Save FCM token
-      unawaited(_saveCurrentFcmToken());
-      unawaited(RevenueCatService.configureAndLogin(user.uid));
+      unawaited(
+        _saveCurrentFcmToken().catchError(
+          (e) => debugPrint('[AuthGate] saveCurrentFcmToken error: $e'),
+        ),
+      );
+      unawaited(
+        RevenueCatService.configureAndLogin(user.uid).catchError(
+          (e) => debugPrint(
+            '[AuthGate] RevenueCatService.configureAndLogin error: $e',
+          ),
+        ),
+      );
 
       _accessProfileSubscription = CloudProfileSync.watchAccessProfile().listen(
         (profile) async {

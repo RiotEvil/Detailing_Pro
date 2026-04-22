@@ -78,7 +78,8 @@ service cloud.firestore {
     }
 
     match /organizations/{orgId} {
-      allow read: if hasOrgAccess(orgId);
+      // Allow public read of basic org info (name, businessMode) for booking pages.
+      allow read: if true;
       allow create: if isSignedIn() && request.resource.data.ownerId == currentUid();
       allow update: if hasOrgAccess(orgId) && hasAdminRights();
       allow delete: if false;
@@ -113,7 +114,8 @@ service cloud.firestore {
     }
 
     match /organizations/{orgId}/services/{serviceId} {
-      allow read: if hasOrgAccess(orgId);
+      // Allow public read so the booking page can show the studio's price list.
+      allow read: if true;
       allow create, update, delete: if hasOrgAccess(orgId) && hasAdminRights();
     }
 

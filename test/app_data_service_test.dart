@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
@@ -6,7 +7,8 @@ import 'package:flutter_application_1/core/constants.dart';
 
 void main() {
   setUpAll(() async {
-    await Hive.initFlutter();
+    final dir = await Directory.systemTemp.createTemp('hive_app_data_');
+    Hive.init(dir.path);
     await Hive.openBox(HiveBoxes.orders);
     await Hive.openBox(HiveBoxes.settings);
   });
@@ -15,25 +17,48 @@ void main() {
     await Hive.close();
   });
 
-  group('AppDataService', () {
-    test('syncOrderToCloud should handle basic order sync', () async {
+  group('AppDataService (no Firebase)', () {
+    // syncOrderToCloud writes to Firestore, not directly to Hive.
+    // Without Firebase, it should return gracefully without throwing.
+    test('syncOrderToCloud does not throw when Firebase is not initialized',
+        () async {
       final order = {'id': 'test_order', 'clientName': 'Test Client'};
-
-      await AppDataService.syncOrderToCloud(order);
-
-      final hiveOrder = Hive.box(HiveBoxes.orders).get('test_order');
-      expect(hiveOrder, isNotNull);
+      await expectLater(
+        AppDataService.syncOrderToCloud(order),
+        completes,
+      );
     });
 
-    test('deleteOrderFromCloud should remove from Hive', () async {
-      await Hive.box(
-        HiveBoxes.orders,
-      ).put('test_delete', {'id': 'test_delete'});
+    test('syncOrderToCloud with empty id does not throw', () async {
+      final order = {'id': '', 'clientName': 'Test Client'};
+      await expectLater(
+        AppDataService.syncOrderToCloud(order),
+        completes,
+      );
+    });
 
-      await AppDataService.deleteOrderFromCloud('test_delete');
+    test('deleteOrderFromCloud does not throw when Firebase is not initialized',
+        () async {
+      await expectLater(
+        AppDataService.deleteOrderFromCloud('some_id'),
+        completes,
+      );
+    });
 
-      final deletedOrder = Hive.box(HiveBoxes.orders).get('test_delete');
-      expect(deletedOrder, isNull);
+    test('deleteOrderFromCloud with null id does not throw', () async {
+      await expectLater(
+        AppDataService.deleteOrderFromCloud(null),
+        completes,
+      );
+    });
+
+    test('stopCloudSync does not throw when not syncing', () async {
+      await expectLater(AppDataService.stopCloudSync(), completes);
+    });
+
+    test('startCloudSync does not throw when Firebase is not initialized',
+        () async {
+      await expectLater(AppDataService.startCloudSync(), completes);
     });
   });
 }

@@ -3,6 +3,14 @@ import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 
+/// Typed exception thrown by [InviteService] for user-facing error messages.
+class InviteException implements Exception {
+  final String message;
+  const InviteException(this.message);
+  @override
+  String toString() => message;
+}
+
 /// Отвечает за генерацию и валидацию инвайт-кодов для команды.
 ///
 /// Структура документа в Firestore: `invites/{code}`
@@ -55,7 +63,7 @@ class InviteService {
   /// Проверяет инвайт-код и атомарно привязывает пользователя к организации.
   ///
   /// При успехе возвращает `orgId` организации.
-  /// При ошибке выбрасывает [String] с понятным сообщением для UI.
+  /// При ошибке выбрасывает [InviteException] с понятным сообщением для UI.
   static Future<String> validateAndJoinOrg({
     required String code,
     required String userUid,
@@ -64,7 +72,7 @@ class InviteService {
 
     final normalizedCode = code.trim().toUpperCase();
     if (normalizedCode.length != 6) {
-      throw 'Invite code must be exactly 6 characters';
+      throw const InviteException('Invite code must be exactly 6 characters');
     }
 
     final firestore = FirebaseFirestore.instance;
@@ -74,12 +82,12 @@ class InviteService {
       final inviteSnap = await tx.get(inviteRef);
 
       if (!inviteSnap.exists) {
-        throw 'Invalid invite code';
+        throw const InviteException('Invalid invite code');
       }
 
       final data = inviteSnap.data()!;
       if (data['used'] == true) {
-        throw 'This invite code has already been used';
+        throw const InviteException('This invite code has already been used');
       }
 
       final orgId = data['orgId'] as String;
