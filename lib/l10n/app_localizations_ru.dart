@@ -883,7 +883,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get authEnterPassword => 'Введите пароль';
 
   @override
-  String get authPasswordMin => 'Минимум 6 символов';
+  String get authPasswordMin => 'Минимум 8 символов';
 
   @override
   String get authFirebaseGuestOnly =>
@@ -1306,6 +1306,27 @@ class AppLocalizationsRu extends AppLocalizations {
   String get settingsBookingLinkOpen => 'Открыть';
 
   @override
+  String get settingsWorkingHoursTitle => 'Рабочие часы';
+
+  @override
+  String get settingsWorkingHoursSlotLabel => 'Слот';
+
+  @override
+  String get settingsWorkingHoursMinNoticeLabel => 'Мин. предупреждение';
+
+  @override
+  String get settingsWorkingHoursBreakLabel => 'Перерыв';
+
+  @override
+  String get settingsWorkingHoursNotice1Hour => '1 час';
+
+  @override
+  String get settingsWorkingHoursNotice2Hours => '2 часа';
+
+  @override
+  String get settingsWorkingHoursNotice24Hours => '24 часа';
+
+  @override
   String get bookingRequestsTitle => 'Онлайн-заявки';
 
   @override
@@ -1358,8 +1379,135 @@ class AppLocalizationsRu extends AppLocalizations {
   String get bookingRequestStatusDeclined => 'Отклонено';
 
   @override
+  String get bookingRequestsFilterAll => 'Все';
+
+  @override
+  String get bookingRequestsEmptyNew => 'Новых заявок нет';
+
+  @override
+  String get bookingRequestsAcceptedFeedback =>
+      'Заявка принята — заказ будет создан автоматически';
+
+  @override
+  String get bookingRequestsDeclinedFeedback => 'Заявка отклонена';
+
+  @override
+  String get bookingRequestsDeclineConfirmContent => 'Отклонить эту заявку?';
+
+  @override
   String get enterServiceName => 'Введите название услуги';
 
   @override
   String get invalidPrice => 'Введите корректную цену (0 или больше)';
+
+  @override
+  String get invoiceTitle => 'СЧЁТ-ФАКТУРА';
+
+  @override
+  String get invoiceNumberPrefix => 'СФ';
+
+  @override
+  String get invoiceSeller => 'ПРОДАВЕЦ';
+
+  @override
+  String get invoiceBuyer => 'ПОКУПАТЕЛЬ';
+
+  @override
+  String get invoiceIssueDateLabel => 'Дата выставления';
+
+  @override
+  String get invoiceServiceDateLabel => 'Дата услуги';
+
+  @override
+  String get invoiceDescriptionLabel => 'Наименование услуги';
+
+  @override
+  String get invoiceQtyLabel => 'Кол-во';
+
+  @override
+  String get invoiceNetPriceLabel => 'Цена без НДС';
+
+  @override
+  String get invoiceVatPctLabel => 'НДС %';
+
+  @override
+  String get invoiceVatAmountLabel => 'Сумма НДС';
+
+  @override
+  String get invoiceGrossPriceLabel => 'Цена с НДС';
+
+  @override
+  String get invoiceNetTotalLabel => 'Итого без НДС:';
+
+  @override
+  String invoiceVatLineLabel(Object rate) {
+    return 'НДС $rate:';
+  }
+
+  @override
+  String get invoiceTotalDueLabel => 'К ОПЛАТЕ:';
+
+  @override
+  String get invoiceFillCompanyLabel => 'Заполните данные компании';
+
+  @override
+  String get invoiceIssuedByLabel => 'Счёт выставлен';
+
+  @override
+  String get invoicePrimaryIdLabel => 'ИНН';
+
+  @override
+  String get invoiceSecondaryIdLabel => 'ОГРН';
+
+  @override
+  String settingsSeatUsage(Object total, Object used) {
+    return '$used / $total мест';
+  }
+
+  @override
+  String get syncOfflineWarning =>
+      'Нет подключения к интернету. Данные могут быть устаревшими.';
+
+  @override
+  String get forceUpdateTitle => 'Требуется обновление';
+
+  @override
+  String get forceUpdateMessage =>
+      'Доступна новая версия приложения. Обновите Detailing Pro, чтобы продолжить работу.';
+
+  @override
+  String get forceUpdateButton => 'Обновить';
+
+  @override
+  String get storageStartupTitle => 'Локальное хранилище недоступно';
+
+  @override
+  String get storageStartupBody =>
+      'Не удалось открыть зашифрованную базу данных Detailing Pro. Данные на устройстве могут быть защищены или повреждены.';
+
+  @override
+  String get storageStartupHint =>
+      'Полностью закройте приложение и откройте снова. Если ошибка повторяется, переустановите приложение (облачные данные сохранятся при входе в тот же аккаунт).';
+
+  @override
+  String get storageStartupCloseApp => 'Закрыть приложение';
+
+  @override
+  String get settingsSyncStatusTitle => 'Облачная синхронизация';
+
+  @override
+  String settingsSyncPendingMessage(int count) {
+    return 'Ожидают синхронизации: $count';
+  }
+
+  @override
+  String settingsSyncFailedMessage(int count) {
+    return 'Не удалось синхронизировать: $count';
+  }
+
+  @override
+  String get settingsSyncRetryButton => 'Повторить синхронизацию';
+
+  @override
+  String get settingsSyncDiscardButton => 'Удалить неудачные изменения';
 }

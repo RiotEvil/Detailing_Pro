@@ -117,6 +117,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
   Future<void> _openCreateChatDialog() async {
     final l10n = AppLocalizations.of(context)!;
+    final settings = Hive.box(HiveBoxes.settings);
+    final currentOrgId = settings.get('orgId')?.toString();
     final chatService = _getChatService();
     if (chatService == null) {
       if (!mounted) return;
@@ -138,17 +140,29 @@ class _ChatListScreenState extends State<ChatListScreen> {
 
       final lower = query.toLowerCase();
       final users = FirebaseFirestore.instance.collection('public_users');
+      Query<Map<String, dynamic>> scopedQuery = users;
+
+      if (_isInternalScope) {
+        if (currentOrgId == null || currentOrgId.isEmpty) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(l10n.chatUnavailableShort)));
+          return;
+        }
+        scopedQuery = scopedQuery.where('orgId', isEqualTo: currentOrgId);
+      }
 
       QuerySnapshot<Map<String, dynamic>> snapshot;
-      final byEmail = await users
-          .where('searchEmail', isEqualTo: lower)
+      final byUid = await scopedQuery
+          .where('uid', isEqualTo: query)
           .limit(10)
           .get();
 
-      if (byEmail.docs.isNotEmpty) {
-        snapshot = byEmail;
+      if (byUid.docs.isNotEmpty) {
+        snapshot = byUid;
       } else {
-        snapshot = await users
+        snapshot = await scopedQuery
             .orderBy('searchName')
             .startAt([lower])
             .endAt(['$lower\uf8ff'])
@@ -175,10 +189,9 @@ class _ChatListScreenState extends State<ChatListScreen> {
               final data = snapshot.docs[index].data();
               final uid = data['uid']?.toString() ?? snapshot.docs[index].id;
               final name = data['displayName']?.toString() ?? uid;
-              final email = data['email']?.toString() ?? '';
               return ListTile(
                 title: Text(name),
-                subtitle: Text(email.isEmpty ? uid : '$email • $uid'),
+                subtitle: Text(uid),
                 onTap: () {
                   Navigator.pop(sheetContext, {'uid': uid, 'name': name});
                 },

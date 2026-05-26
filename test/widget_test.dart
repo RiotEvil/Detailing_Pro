@@ -1,12 +1,16 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_application_1/main.dart';
 import 'package:flutter_application_1/core/constants.dart';
+import 'package:flutter_application_1/core/onboarding_prefs.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 void main() {
   setUpAll(() async {
-    Hive.init('test_hive');
+    final dir = await Directory.systemTemp.createTemp('hive_widget_');
+    Hive.init(dir.path);
 
     await Hive.openBox(HiveBoxes.clients);
     await Hive.openBox(HiveBoxes.services);
@@ -14,8 +18,10 @@ void main() {
     await Hive.openBox(HiveBoxes.inventory);
     await Hive.openBox(HiveBoxes.settings);
 
-    await Hive.box(HiveBoxes.settings).put('locale', 'en');
-    await Hive.box(HiveBoxes.settings).put('currency', '€');
+    final settings = Hive.box(HiveBoxes.settings);
+    await settings.put('locale', 'en');
+    await settings.put('currency', '€');
+    await OnboardingPrefs.markPreAuthCompleted(settings, skipped: true);
   });
 
   tearDown(() async {
@@ -31,7 +37,7 @@ void main() {
 
   testWidgets('App starts and shows auth screen', (WidgetTester tester) async {
     await tester.pumpWidget(const DetailingProApp(locale: Locale('en')));
-    await tester.pump(const Duration(milliseconds: 300));
+    await tester.pumpAndSettle();
 
     expect(find.byType(MaterialApp), findsOneWidget);
     expect(find.byType(TabBar), findsOneWidget);

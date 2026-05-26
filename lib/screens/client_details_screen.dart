@@ -85,7 +85,14 @@ class _ClientDetailsScreenState extends State<ClientDetailsScreen> {
         photoPath.startsWith('http://') || photoPath.startsWith('https://');
     final image = (kIsWeb || isRemote)
         ? Image.network(photoPath, fit: BoxFit.cover)
-        : Image.file(File(photoPath), fit: BoxFit.cover);
+        : Image.file(
+            File(photoPath),
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => const ColoredBox(
+              color: Color(0xFF2A2A2A),
+              child: Icon(Icons.broken_image_outlined, color: Colors.white54),
+            ),
+          );
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
@@ -105,7 +112,14 @@ class _ClientDetailsScreenState extends State<ClientDetailsScreen> {
         photoPath.startsWith('http://') || photoPath.startsWith('https://');
     final image = (kIsWeb || isRemote)
         ? Image.network(photoPath, fit: BoxFit.cover)
-        : Image.file(File(photoPath), fit: BoxFit.cover);
+        : Image.file(
+            File(photoPath),
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => const ColoredBox(
+              color: Color(0xFF2A2A2A),
+              child: Icon(Icons.broken_image_outlined, color: Colors.white54),
+            ),
+          );
 
     return InkWell(
       onTap: () => _openPhotoFullscreen(photoPath),
@@ -716,7 +730,15 @@ class _CarPhotoViewerScreen extends StatelessWidget {
         photoPath.startsWith('http://') || photoPath.startsWith('https://');
     final image = (kIsWeb || isRemote)
         ? Image.network(photoPath, fit: BoxFit.contain)
-        : Image.file(File(photoPath), fit: BoxFit.contain);
+        : Image.file(
+            File(photoPath),
+            fit: BoxFit.contain,
+            errorBuilder: (_, _, _) => const Icon(
+              Icons.broken_image_outlined,
+              color: Colors.white54,
+              size: 64,
+            ),
+          );
 
     return Scaffold(
       backgroundColor: Colors.black,

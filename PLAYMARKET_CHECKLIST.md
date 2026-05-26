@@ -4,6 +4,17 @@
 
 ## Market: Poland (Primary), Multi-language support
 
+## ✅ Release v22 Snapshot (2026-05-20)
+
+- [x] Version updated to 7.1.4+22 in pubspec.yaml
+- [x] Signed AAB built: build/app/outputs/bundle/release/app-release.aab
+- [x] Firestore rules deployed
+- [x] Cloud Functions deployed
+- [x] Smoke checks green: functionsHealth=200, getBookingAvailability(no masterUid)=400, createBookingRequest(invalid payload)=400
+- [x] Release notes prepared for 10 locales
+- [ ] Final manual check on physical Android device
+- [ ] Upload AAB to Google Play and start staged rollout
+
 ---
 
 ## ✅ COMPLETED - Week 1 (Security & Input Validation)
@@ -14,6 +25,7 @@
 - [x] Invite code tampering prevention (only `used`, `usedBy`, `usedAt` changeable)
 - [x] Chat room creator must be participant
 - [x] Booking requests validation + field whitelist + length limits
+- [x] `app_config` collection: public read (ForceUpdate), write blocked
 
 ### 2. Hive Storage Encryption
 
@@ -48,22 +60,30 @@
 ### 6. Debug Cleanup
 
 - [x] debugPrint disabled in release mode (kReleaseMode check)
-- [x] AndroidManifest.xml verified (CAMERA, POST_NOTIFICATIONS, READ_MEDIA_IMAGES)
+- [x] AndroidManifest.xml verified (INTERNET, CAMERA, POST_NOTIFICATIONS)
 - [x] Debug banner already disabled
 
 ### 7. Gradle & Minification
 
 - [x] Release build: isMinifyEnabled = true
 - [x] Release build: isShrinkResources = true
-- [x] proguard-rules.pro created (Firebase, Hive, Google Sign-In rules)
+- [x] proguard-rules.pro updated (correct package: com.detailing.business.app)
 - [x] Java 17 desugaring enabled
 - [x] gradle.properties optimized for Windows
 
 ### 8. Production Settings
 
 - [x] Application ID: com.detailing.business.app ✓
-- [x] Min SDK: depends on flutter.minSdkVersion
+- [x] **Namespace: com.detailing.business.app** (fixed from com.example.flutter_application_1)
+- [x] **MainActivity.kt moved to com/detailing/business/app/** (fixed)
+- [x] Min SDK: **21** (explicit, not flutter.minSdkVersion)
 - [x] Target SDK: depends on flutter.targetSdkVersion
+
+### 9. Security Hardening (App Council Review — April 2026)
+
+- [x] **CORS in Cloud Functions**: restricted to Firebase Hosting domains only (fixed wildcard `*`)
+- [x] **Storage rules**: 10 MB file size limit added on write
+- [x] **INTERNET permission**: explicitly declared in AndroidManifest.xml
 
 ---
 
@@ -94,22 +114,16 @@
 
 ### 12. Legal & Compliance
 
-- [ ] Privacy policy reviewed and finalized
-  - Current: `legalPrivacySectionX` in app_en/pl/.arb
-  - Update: Contact email, data retention, compliance
-- [ ] Terms of service finalized
-  - Current: `legalTermsSectionX` in app_en/pl/.arb
-  - Update: Jurisdiction (Poland), business structure, limitations
-- [ ] Both policies uploaded to public URLs
+- [x] Privacy policy reviewed and finalized
+  - Published: https://detailing-pro.web.app/privacy-policy.html
+- [x] Terms of service finalized
+  - Lume Studio Vladyslav Krasnikov, Poland jurisdiction, April 27 2026
+- [x] Both policies uploaded to public URLs
 
 ### 13. App Signing
 
-- [ ] Generate APK or AAB for testing
-  ```bash
-  flutter build appbundle --release
-  # or
-  flutter build apk --release
-  ```
+- [x] Generate APK or AAB for testing
+  - Built: build\app\outputs\bundle\release\app-release.aab (7.1.4+22)
 - [ ] Test on actual device or emulator
 - [ ] Verify Firebase initialization
 - [ ] Verify Google Sign-In works
@@ -125,13 +139,11 @@
 
 ### 15. Upload to Google Play
 
-- [ ] Build finalized release AAB
-- [ ] Upload to internal testing track first
-- [ ] Test link with internal testers (min 3 devices)
-- [ ] Fix any Firebase/connectivity issues
-- [ ] Move to beta track (optional)
-- [ ] Prepare release notes in Polish + English
-- [ ] Schedule rollout (staged: 5% → 25% → 100%)
+- [x] Build finalized release AAB (7.1.4+22)
+- [ ] Upload v22 bundle to production track
+- [ ] Add v22 release notes in all 10 locales
+- [ ] Start staged rollout (5% -> 25% -> 100%)
+- [x] Baseline: app already published and active since April 27, 2026
 
 ---
 
@@ -149,29 +161,61 @@
 ## 📊 Configuration Summary
 
 **App**: DetailingPro (com.detailing.business.app)  
-**Version**: 1.0.0 (build 1)  
-**Min SDK**: flutter.minSdkVersion (typically 21)  
-**Target SDK**: flutter.targetSdkVersion (typically 34+)  
-**Signing**: keystore @ android/app/release.jks  
-**Locales**: 9 (en, pl, ru, de, es, it, pt, tr, zh)  
+**Version**: 7.1.4 (build 22)
+**Min SDK**: 21
+**Target SDK**: flutter.targetSdkVersion (typically 34+)
+**Signing**: android/app/upload-keystore.jks  
+**Locales**: 10 (en, pl, ru, uk, de, es, it, pt, tr, zh)
 **Permissions**: CAMERA, POST_NOTIFICATIONS, READ_MEDIA_IMAGES, READ_EXTERNAL_STORAGE
 
 ---
 
 ## 🚀 Next Steps
 
-1. **Test Build**:
+1. **Test Build with RevenueCat key** (required for paid plans):
 
    ```bash
-   flutter build appbundle --release
+   flutter build appbundle --release \
+     --dart-define=RC_ANDROID_API_KEY=appl_YOUR_ANDROID_KEY_HERE
    ```
 
-2. **Manual QA**: Install on device, test all features
+   > Store `RC_ANDROID_API_KEY` in CI/CD secrets (GitHub Actions: Settings → Secrets).
+   > Never commit to source control. For local builds, create `build_config.env` (gitignored):
+   >
+   > ```
+   > RC_ANDROID_API_KEY=appl_...
+   > ```
+   >
+   > Then build via: `flutter build appbundle --release --dart-define-from-file=build_config.env`
 
-3. **Google Play Console**: Create app listing, upload AAB
+2. **Create Firestore `app_config/versions` document** for ForceUpdate:
 
-4. **Legal Finalization**: Review and post privacy policy/terms
+   ```json
+   {
+     "minAndroid": "1.0.0",
+     "minAndroidBuild": 1,
+     "androidUrl": "https://play.google.com/store/apps/details?id=com.detailing.business.app"
+   }
+   ```
 
-5. **Soft Launch**: Beta track with testers
+3. **Deploy Cloud Functions** (CORS fix applies):
 
-6. **Production Release**: Staged rollout starting at 5%
+   ```bash
+   cd functions && firebase deploy --only functions
+   ```
+
+4. **Deploy Firestore + Storage rules**:
+
+   ```bash
+   firebase deploy --only firestore,storage
+   ```
+
+5. **Manual QA**: Install on device, test all features
+
+6. **Google Play Console**: Create app listing, upload AAB
+
+7. **Legal Finalization**: Review and post privacy policy/terms
+
+8. **Soft Launch**: Beta track with testers
+
+9. **Production Release**: Staged rollout starting at 5%

@@ -884,7 +884,7 @@ class AppLocalizationsIt extends AppLocalizations {
   String get authEnterPassword => 'Inserisci password';
 
   @override
-  String get authPasswordMin => 'Minimo 6 caratteri';
+  String get authPasswordMin => 'Minimo 8 caratteri';
 
   @override
   String get authFirebaseGuestOnly =>
@@ -1310,6 +1310,27 @@ class AppLocalizationsIt extends AppLocalizations {
   String get settingsBookingLinkOpen => 'Apri';
 
   @override
+  String get settingsWorkingHoursTitle => 'Orari di lavoro';
+
+  @override
+  String get settingsWorkingHoursSlotLabel => 'Slot';
+
+  @override
+  String get settingsWorkingHoursMinNoticeLabel => 'Preavviso min.';
+
+  @override
+  String get settingsWorkingHoursBreakLabel => 'Pausa';
+
+  @override
+  String get settingsWorkingHoursNotice1Hour => '1 ora';
+
+  @override
+  String get settingsWorkingHoursNotice2Hours => '2 ore';
+
+  @override
+  String get settingsWorkingHoursNotice24Hours => '24 ore';
+
+  @override
   String get bookingRequestsTitle => 'Richieste online';
 
   @override
@@ -1361,8 +1382,136 @@ class AppLocalizationsIt extends AppLocalizations {
   String get bookingRequestStatusDeclined => 'Rifiutato';
 
   @override
+  String get bookingRequestsFilterAll => 'Tutti';
+
+  @override
+  String get bookingRequestsEmptyNew => 'Nessuna nuova richiesta';
+
+  @override
+  String get bookingRequestsAcceptedFeedback =>
+      'Richiesta accettata — l\'ordine verrà creato automaticamente';
+
+  @override
+  String get bookingRequestsDeclinedFeedback => 'Richiesta rifiutata';
+
+  @override
+  String get bookingRequestsDeclineConfirmContent =>
+      'Rifiutare questa richiesta di prenotazione?';
+
+  @override
   String get enterServiceName => 'Il nome del servizio è obbligatorio';
 
   @override
   String get invalidPrice => 'Inserisci un prezzo valido (0 o più)';
+
+  @override
+  String get invoiceTitle => 'FATTURA';
+
+  @override
+  String get invoiceNumberPrefix => 'FT';
+
+  @override
+  String get invoiceSeller => 'VENDITORE';
+
+  @override
+  String get invoiceBuyer => 'ACQUIRENTE';
+
+  @override
+  String get invoiceIssueDateLabel => 'Data di emissione';
+
+  @override
+  String get invoiceServiceDateLabel => 'Data del servizio';
+
+  @override
+  String get invoiceDescriptionLabel => 'Descrizione';
+
+  @override
+  String get invoiceQtyLabel => 'Qtà';
+
+  @override
+  String get invoiceNetPriceLabel => 'Prezzo netto';
+
+  @override
+  String get invoiceVatPctLabel => 'IVA %';
+
+  @override
+  String get invoiceVatAmountLabel => 'Importo IVA';
+
+  @override
+  String get invoiceGrossPriceLabel => 'Prezzo lordo';
+
+  @override
+  String get invoiceNetTotalLabel => 'Totale netto:';
+
+  @override
+  String invoiceVatLineLabel(Object rate) {
+    return 'IVA $rate:';
+  }
+
+  @override
+  String get invoiceTotalDueLabel => 'DA PAGARE:';
+
+  @override
+  String get invoiceFillCompanyLabel => 'Compilare i dati aziendali';
+
+  @override
+  String get invoiceIssuedByLabel => 'Fattura emessa da';
+
+  @override
+  String get invoicePrimaryIdLabel => 'Partita IVA';
+
+  @override
+  String get invoiceSecondaryIdLabel => 'Codice fiscale';
+
+  @override
+  String settingsSeatUsage(Object total, Object used) {
+    return '$used / $total posti';
+  }
+
+  @override
+  String get syncOfflineWarning =>
+      'Nessuna connessione Internet. I dati potrebbero non essere aggiornati.';
+
+  @override
+  String get forceUpdateTitle => 'Aggiornamento richiesto';
+
+  @override
+  String get forceUpdateMessage =>
+      'È disponibile una nuova versione dell\'app. Aggiorna Detailing Pro per continuare.';
+
+  @override
+  String get forceUpdateButton => 'Aggiorna';
+
+  @override
+  String get storageStartupTitle => 'Archiviazione locale non disponibile';
+
+  @override
+  String get storageStartupBody =>
+      'Detailing Pro non ha potuto aprire il database crittografato. I dati su questo dispositivo potrebbero essere protetti o danneggiati.';
+
+  @override
+  String get storageStartupHint =>
+      'Chiudi completamente l\'app e riaprila. Se il problema persiste, reinstalla l\'app (i dati cloud restano se accedi con lo stesso account).';
+
+  @override
+  String get storageStartupCloseApp => 'Chiudi app';
+
+  @override
+  String get settingsSyncStatusTitle => 'Sincronizzazione cloud';
+
+  @override
+  String settingsSyncPendingMessage(int count) {
+    return '$count modifiche in attesa di sync';
+  }
+
+  @override
+  String settingsSyncFailedMessage(int count) {
+    return '$count modifiche non sincronizzate';
+  }
+
+  @override
+  String get settingsSyncRetryButton => 'Riprova sync';
+
+  @override
+  String get settingsSyncDiscardButton => 'Elimina modifiche fallite';
 }

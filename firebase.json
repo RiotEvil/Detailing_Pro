@@ -1,44 +1,76 @@
 {
-	"firestore": {
-		"rules": "firestore.rules"
-	},
-	"storage": {
-		"rules": "storage.rules"
-	},
-	"functions": {
-		"source": "functions"
-	},
-	"hosting": {
-		"public": "build/web",
-		"ignore": [
-			"firebase.json",
-			"**/.*",
-			"**/node_modules/**"
-		],
-		"rewrites": [
-			{ "source": "/book.html", "destination": "/book.html" },
-			{ "source": "**", "destination": "/index.html" }
-		]
-	},
-	"flutter": {
-		"platforms": {
-			"android": {
-				"default": {
-					"projectId": "detailing-pro",
-					"appId": "1:802635202251:android:84066464baf8d44947654e",
-					"fileOutput": "android/app/google-services.json"
-				}
-			},
-			"dart": {
-				"lib/firebase_options.dart": {
-					"projectId": "detailing-pro",
-					"configurations": {
-						"android": "1:802635202251:android:84066464baf8d44947654e",
-						"web": "1:802635202251:web:6888cf2faf8d44d847654e",
-						"windows": "1:802635202251:web:6888cf2faf8d44d847654e"
-					}
-				}
-			}
-		}
-	}
+  "firestore": {
+    "rules": "firestore.rules"
+  },
+  "storage": {
+    "rules": "storage.rules"
+  },
+  "functions": [
+    {
+      "codebase": "default",
+      "source": "functions"
+    },
+    {
+      "source": "crashfunctions",
+      "codebase": "functions",
+      "disallowLegacyRuntimeConfig": true,
+      "ignore": [
+        "node_modules",
+        ".git",
+        "firebase-debug.log",
+        "firebase-debug.*.log",
+        "*.local"
+      ]
+    }
+  ],
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "headers": [
+      {
+        "source": "/book.html",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-store, max-age=0"
+          }
+        ]
+      }
+    ],
+    "rewrites": [
+      {
+        "source": "/book.html",
+        "destination": "/book.html"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "detailing-pro",
+          "appId": "1:802635202251:android:84066464baf8d44947654e",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "detailing-pro",
+          "configurations": {
+            "android": "1:802635202251:android:84066464baf8d44947654e",
+            "web": "1:802635202251:web:6888cf2faf8d44d847654e",
+            "windows": "1:802635202251:web:6888cf2faf8d44d847654e"
+          }
+        }
+      }
+    }
+  }
 }

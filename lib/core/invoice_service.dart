@@ -5,258 +5,9 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
+import '../l10n/app_localizations.dart';
 import 'constants.dart';
 import 'order_services.dart';
-
-/// Locale-specific labels for the invoice PDF.
-class _InvoiceLabels {
-  final String title;
-  final String numberPrefix;
-  final String seller;
-  final String buyer;
-  final String issueDate;
-  final String serviceDate;
-  final String description;
-  final String qty;
-  final String netPrice;
-  final String vatPct;
-  final String vatAmount;
-  final String grossPrice;
-  final String netTotal;
-  final String vatLine;
-  final String totalDue;
-  final String fillCompany;
-  final String issuedBy;
-  final String primaryIdLabel;
-  final String secondaryIdLabel;
-
-  const _InvoiceLabels({
-    required this.title,
-    required this.numberPrefix,
-    required this.seller,
-    required this.buyer,
-    required this.issueDate,
-    required this.serviceDate,
-    required this.description,
-    required this.qty,
-    required this.netPrice,
-    required this.vatPct,
-    required this.vatAmount,
-    required this.grossPrice,
-    required this.netTotal,
-    required this.vatLine,
-    required this.totalDue,
-    required this.fillCompany,
-    required this.issuedBy,
-    required this.primaryIdLabel,
-    required this.secondaryIdLabel,
-  });
-
-  factory _InvoiceLabels.forLocale(String locale, double vatRate) {
-    final vatStr = '${vatRate.toStringAsFixed(0)}%';
-    switch (locale) {
-      case 'pl':
-        return _InvoiceLabels(
-          title: 'FAKTURA VAT',
-          numberPrefix: 'FV',
-          seller: 'SPRZEDAWCA',
-          buyer: 'NABYWCA',
-          issueDate: 'Data wystawienia',
-          serviceDate: 'Data sprzedazy',
-          description: 'Nazwa uslugi / towaru',
-          qty: 'Ilosc',
-          netPrice: 'Cena netto',
-          vatPct: 'VAT %',
-          vatAmount: 'Kwota VAT',
-          grossPrice: 'Cena brutto',
-          netTotal: 'Razem netto:',
-          vatLine: 'VAT $vatStr:',
-          totalDue: 'DO ZAPLATY:',
-          fillCompany: 'Uzupelnij dane firmy',
-          issuedBy: 'Faktura wystawiona przez',
-          primaryIdLabel: 'NIP',
-          secondaryIdLabel: 'REGON',
-        );
-      case 'de':
-        return _InvoiceLabels(
-          title: 'RECHNUNG',
-          numberPrefix: 'RE',
-          seller: 'VERKÄUFER',
-          buyer: 'KÄUFER',
-          issueDate: 'Ausstellungsdatum',
-          serviceDate: 'Leistungsdatum',
-          description: 'Beschreibung',
-          qty: 'Menge',
-          netPrice: 'Nettopreis',
-          vatPct: 'MwSt. %',
-          vatAmount: 'MwSt. Betrag',
-          grossPrice: 'Bruttopreis',
-          netTotal: 'Netto gesamt:',
-          vatLine: 'MwSt. $vatStr:',
-          totalDue: 'GESAMT:',
-          fillCompany: 'Firmendaten ausfüllen',
-          issuedBy: 'Rechnung ausgestellt von',
-          primaryIdLabel: 'USt-IdNr.',
-          secondaryIdLabel: 'Handelsregisternr.',
-        );
-      case 'it':
-        return _InvoiceLabels(
-          title: 'FATTURA',
-          numberPrefix: 'FT',
-          seller: 'VENDITORE',
-          buyer: 'ACQUIRENTE',
-          issueDate: 'Data di emissione',
-          serviceDate: 'Data del servizio',
-          description: 'Descrizione',
-          qty: 'Qtà',
-          netPrice: 'Prezzo netto',
-          vatPct: 'IVA %',
-          vatAmount: 'Importo IVA',
-          grossPrice: 'Prezzo lordo',
-          netTotal: 'Totale netto:',
-          vatLine: 'IVA $vatStr:',
-          totalDue: 'DA PAGARE:',
-          fillCompany: 'Compilare i dati aziendali',
-          issuedBy: 'Fattura emessa da',
-          primaryIdLabel: 'Partita IVA',
-          secondaryIdLabel: 'Codice fiscale',
-        );
-      case 'es':
-        return _InvoiceLabels(
-          title: 'FACTURA',
-          numberPrefix: 'FC',
-          seller: 'VENDEDOR',
-          buyer: 'COMPRADOR',
-          issueDate: 'Fecha de emisión',
-          serviceDate: 'Fecha del servicio',
-          description: 'Descripción',
-          qty: 'Cant.',
-          netPrice: 'Precio neto',
-          vatPct: 'IVA %',
-          vatAmount: 'Importe IVA',
-          grossPrice: 'Precio bruto',
-          netTotal: 'Total neto:',
-          vatLine: 'IVA $vatStr:',
-          totalDue: 'TOTAL A PAGAR:',
-          fillCompany: 'Completar datos de empresa',
-          issuedBy: 'Factura emitida por',
-          primaryIdLabel: 'NIF/CIF',
-          secondaryIdLabel: 'Registro mercantil',
-        );
-      case 'pt':
-        return _InvoiceLabels(
-          title: 'FATURA',
-          numberPrefix: 'FT',
-          seller: 'VENDEDOR',
-          buyer: 'COMPRADOR',
-          issueDate: 'Data de emissão',
-          serviceDate: 'Data do serviço',
-          description: 'Descrição',
-          qty: 'Qtd.',
-          netPrice: 'Preço líquido',
-          vatPct: 'IVA %',
-          vatAmount: 'Valor IVA',
-          grossPrice: 'Preço bruto',
-          netTotal: 'Total líquido:',
-          vatLine: 'IVA $vatStr:',
-          totalDue: 'A PAGAR:',
-          fillCompany: 'Preencher dados da empresa',
-          issuedBy: 'Fatura emitida por',
-          primaryIdLabel: 'NIF',
-          secondaryIdLabel: 'Registo comercial',
-        );
-      case 'tr':
-        return _InvoiceLabels(
-          title: 'FATURA',
-          numberPrefix: 'FT',
-          seller: 'SATICI',
-          buyer: 'ALICI',
-          issueDate: 'Düzenleme tarihi',
-          serviceDate: 'Hizmet tarihi',
-          description: 'Açıklama',
-          qty: 'Adet',
-          netPrice: 'Net fiyat',
-          vatPct: 'KDV %',
-          vatAmount: 'KDV tutarı',
-          grossPrice: 'Brüt fiyat',
-          netTotal: 'Net toplam:',
-          vatLine: 'KDV $vatStr:',
-          totalDue: 'ÖDENECEK:',
-          fillCompany: 'Şirket bilgilerini doldurun',
-          issuedBy: 'Tarafından düzenlendi',
-          primaryIdLabel: 'Vergi No',
-          secondaryIdLabel: 'Şirket sicil no',
-        );
-      case 'zh':
-        return _InvoiceLabels(
-          title: '发票',
-          numberPrefix: 'INV',
-          seller: '销售方',
-          buyer: '买方',
-          issueDate: '开票日期',
-          serviceDate: '服务日期',
-          description: '项目描述',
-          qty: '数量',
-          netPrice: '净价',
-          vatPct: '税率%',
-          vatAmount: '税额',
-          grossPrice: '含税价',
-          netTotal: '净额合计:',
-          vatLine: '税额 $vatStr:',
-          totalDue: '应付总额:',
-          fillCompany: '请填写公司信息',
-          issuedBy: '开票方',
-          primaryIdLabel: '税号',
-          secondaryIdLabel: '工商注册号',
-        );
-      case 'ru':
-        return _InvoiceLabels(
-          title: 'СЧЁТ-ФАКТУРА',
-          numberPrefix: 'СФ',
-          seller: 'ПРОДАВЕЦ',
-          buyer: 'ПОКУПАТЕЛЬ',
-          issueDate: 'Дата выставления',
-          serviceDate: 'Дата услуги',
-          description: 'Наименование услуги',
-          qty: 'Кол-во',
-          netPrice: 'Цена без НДС',
-          vatPct: 'НДС %',
-          vatAmount: 'Сумма НДС',
-          grossPrice: 'Цена с НДС',
-          netTotal: 'Итого без НДС:',
-          vatLine: 'НДС $vatStr:',
-          totalDue: 'К ОПЛАТЕ:',
-          fillCompany: 'Заполните данные компании',
-          issuedBy: 'Счёт выставлен',
-          primaryIdLabel: 'ИНН',
-          secondaryIdLabel: 'ОГРН',
-        );
-      // en + fallback
-      default:
-        return _InvoiceLabels(
-          title: 'INVOICE',
-          numberPrefix: 'INV',
-          seller: 'SELLER',
-          buyer: 'BUYER',
-          issueDate: 'Issue date',
-          serviceDate: 'Service date',
-          description: 'Description',
-          qty: 'Qty',
-          netPrice: 'Net price',
-          vatPct: 'VAT %',
-          vatAmount: 'VAT amount',
-          grossPrice: 'Gross price',
-          netTotal: 'Net total:',
-          vatLine: 'VAT $vatStr:',
-          totalDue: 'TOTAL DUE:',
-          fillCompany: 'Fill in company data',
-          issuedBy: 'Invoice issued by',
-          primaryIdLabel: 'Tax ID',
-          secondaryIdLabel: 'Business ID',
-        );
-    }
-  }
-}
 
 /// Generates and prints a VAT invoice for an order in the app's current language.
 class InvoiceService {
@@ -276,13 +27,12 @@ class InvoiceService {
     required String currency,
   }) async {
     final settingsBox = Hive.box(HiveBoxes.settings);
+    final l10n = AppLocalizations.of(context)!;
 
-    // Locale & VAT rate
-    final locale =
-        settingsBox.get('locale', defaultValue: 'en')?.toString() ?? 'en';
+    // VAT rate
     final vatRate =
         (settingsBox.get('companyVatRate') as num?)?.toDouble() ?? 23.0;
-    final labels = _InvoiceLabels.forLocale(locale, vatRate);
+    final vatStr = '${vatRate.toStringAsFixed(0)}%';
 
     // Company data
     final companyName =
@@ -311,13 +61,21 @@ class InvoiceService {
     final netPrice = grossPrice / (1 + vatRate / 100);
     final vatAmount = grossPrice - netPrice;
 
-    final invoiceNumber = _nextInvoiceNumber(settingsBox, labels.numberPrefix);
+    final invoiceNumber =
+        _nextInvoiceNumber(settingsBox, l10n.invoiceNumberPrefix);
     final issueDate = DateFormat('dd.MM.yyyy').format(DateTime.now());
     final serviceDate = _formatOrderDate(orderData);
 
-    // Noto Sans supports all the locales (Latin, Cyrillic, Chinese, Arabic-adjacent)
-    final fontRegular = await PdfGoogleFonts.notoSansRegular();
-    final fontBold = await PdfGoogleFonts.notoSansBold();
+    // Noto Sans supports all the locales (Latin, Cyrillic, Chinese, Arabic-adjacent).
+    // Fall back to built-in Helvetica when offline so the invoice still generates.
+    pw.Font fontRegular = pw.Font.helvetica();
+    pw.Font fontBold = pw.Font.helveticaBold();
+    try {
+      fontRegular = await PdfGoogleFonts.notoSansRegular();
+      fontBold = await PdfGoogleFonts.notoSansBold();
+    } catch (_) {
+      // offline or font fetch failed — Helvetica fallback already assigned
+    }
 
     final pdf = pw.Document();
 
@@ -334,7 +92,7 @@ class InvoiceService {
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
                   pw.Text(
-                    labels.title,
+                    l10n.invoiceTitle,
                     style: pw.TextStyle(font: fontBold, fontSize: 22),
                   ),
                   pw.Column(
@@ -346,11 +104,11 @@ class InvoiceService {
                       ),
                       pw.SizedBox(height: 4),
                       pw.Text(
-                        '${labels.issueDate}: $issueDate',
+                        '${l10n.invoiceIssueDateLabel}: $issueDate',
                         style: pw.TextStyle(font: fontRegular, fontSize: 10),
                       ),
                       pw.Text(
-                        '${labels.serviceDate}: $serviceDate',
+                        '${l10n.invoiceServiceDateLabel}: $serviceDate',
                         style: pw.TextStyle(font: fontRegular, fontSize: 10),
                       ),
                     ],
@@ -366,9 +124,9 @@ class InvoiceService {
                 children: [
                   pw.Expanded(
                     child: _partyBox(
-                      title: labels.seller,
+                      title: l10n.invoiceSeller,
                       name: companyName.isEmpty
-                          ? labels.fillCompany
+                          ? l10n.invoiceFillCompanyLabel
                           : companyName,
                       lines: [
                         if (companyAddress.isNotEmpty) companyAddress,
@@ -376,9 +134,9 @@ class InvoiceService {
                             companyCity.isNotEmpty)
                           '$companyPostalCode $companyCity'.trim(),
                         if (companyNip.isNotEmpty)
-                          '${labels.primaryIdLabel}: $companyNip',
+                          '${l10n.invoicePrimaryIdLabel}: $companyNip',
                         if (companyRegon.isNotEmpty)
-                          '${labels.secondaryIdLabel}: $companyRegon',
+                          '${l10n.invoiceSecondaryIdLabel}: $companyRegon',
                       ],
                       fontBold: fontBold,
                       fontRegular: fontRegular,
@@ -387,7 +145,7 @@ class InvoiceService {
                   pw.SizedBox(width: 16),
                   pw.Expanded(
                     child: _partyBox(
-                      title: labels.buyer,
+                      title: l10n.invoiceBuyer,
                       name: clientName,
                       lines: const [],
                       fontBold: fontBold,
@@ -419,12 +177,16 @@ class InvoiceService {
                       color: PdfColors.grey200,
                     ),
                     children: [
-                      _cell(labels.description, fontBold, isHeader: true),
-                      _cell(labels.qty, fontBold, isHeader: true),
-                      _cell(labels.netPrice, fontBold, isHeader: true),
-                      _cell(labels.vatPct, fontBold, isHeader: true),
-                      _cell(labels.vatAmount, fontBold, isHeader: true),
-                      _cell(labels.grossPrice, fontBold, isHeader: true),
+                      _cell(l10n.invoiceDescriptionLabel, fontBold,
+                          isHeader: true),
+                      _cell(l10n.invoiceQtyLabel, fontBold, isHeader: true),
+                      _cell(l10n.invoiceNetPriceLabel, fontBold,
+                          isHeader: true),
+                      _cell(l10n.invoiceVatPctLabel, fontBold, isHeader: true),
+                      _cell(l10n.invoiceVatAmountLabel, fontBold,
+                          isHeader: true),
+                      _cell(l10n.invoiceGrossPriceLabel, fontBold,
+                          isHeader: true),
                     ],
                   ),
                   pw.TableRow(
@@ -450,20 +212,20 @@ class InvoiceService {
                   child: pw.Column(
                     children: [
                       _totalRow(
-                        labels.netTotal,
+                        l10n.invoiceNetTotalLabel,
                         '${_fmt(netPrice)} $currency',
                         fontRegular,
                         fontBold,
                       ),
                       _totalRow(
-                        labels.vatLine,
+                        l10n.invoiceVatLineLabel(vatStr),
                         '${_fmt(vatAmount)} $currency',
                         fontRegular,
                         fontBold,
                       ),
                       pw.SizedBox(height: 4),
                       _totalRow(
-                        labels.totalDue,
+                        l10n.invoiceTotalDueLabel,
                         '${_fmt(grossPrice)} $currency',
                         fontBold,
                         fontBold,
@@ -479,7 +241,7 @@ class InvoiceService {
               // ── Footer ───────────────────────────────────
               pw.Divider(color: PdfColors.grey400),
               pw.Text(
-                '${labels.issuedBy}: $companyName',
+                '${l10n.invoiceIssuedByLabel}: $companyName',
                 style: pw.TextStyle(
                   font: fontRegular,
                   fontSize: 8,

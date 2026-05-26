@@ -8,6 +8,7 @@ import 'package:flutter_application_1/l10n/app_localizations.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../core/access_guard.dart';
+import '../core/analytics_service.dart';
 import '../core/app_data_service.dart';
 import '../core/constants.dart';
 import '../core/order_reminder_service.dart';
@@ -210,7 +211,9 @@ class _AddJobScreenState extends State<AddJobScreen> {
               padding: const EdgeInsets.all(16),
               children: [
                 DropdownButtonFormField<String>(
-                  initialValue: _selectedClient,
+                  initialValue: clients.contains(_selectedClient)
+                      ? _selectedClient
+                      : null,
                   decoration: InputDecoration(
                     labelText: l10n.clientFieldLabel,
                     prefixIcon: const Icon(Icons.person_outline),
@@ -635,9 +638,13 @@ class _AddJobScreenState extends State<AddJobScreen> {
         .where((name) => name.trim().isNotEmpty)
         .toSet();
 
-    _selectedServices = _selectedServices
-        .where((name) => knownServiceNames.contains(name))
-        .toList();
+    // In edit mode, preserve user's existing services even if no longer in
+    // the catalogue (service may have been renamed/deleted after order creation).
+    if (!_isEdit) {
+      _selectedServices = _selectedServices
+          .where((name) => knownServiceNames.contains(name))
+          .toList();
+    }
 
     if (_serviceToAdd != null && !knownServiceNames.contains(_serviceToAdd)) {
       _serviceToAdd = null;
@@ -928,6 +935,7 @@ class _AddJobScreenState extends State<AddJobScreen> {
 
       // Fire-and-forget sync to Firestore
       unawaited(AppDataService.syncOrderToCloud(order.toMap()));
+      unawaited(AnalyticsService.logOrderCreated(price: order.price));
 
       final orderMap = order.toMap();
       if (_isCompletedStatus(order.status)) {

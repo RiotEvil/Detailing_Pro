@@ -11,6 +11,7 @@ import '../core/app_data_service.dart';
 import '../core/constants.dart';
 import '../core/invoice_service.dart';
 import '../core/order_services.dart';
+import '../models/model_utils.dart';
 
 class OrderDetailsScreen extends StatefulWidget {
   const OrderDetailsScreen({
@@ -51,9 +52,15 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final status = OrderStatus.fromName(_orderData['status']?.toString());
-    final revenue = _toDouble(_orderData['price']);
-    final materialCost = _toDouble(_orderData['materialCost']);
-    final laborCost = _toDouble(_orderData['laborCost']);
+    final revenue = parseDouble(_orderData['price'], field: 'Order.price');
+    final materialCost = parseDouble(
+      _orderData['materialCost'],
+      field: 'Order.materialCost',
+    );
+    final laborCost = parseDouble(
+      _orderData['laborCost'],
+      field: 'Order.laborCost',
+    );
     final totalCost = materialCost + laborCost;
     final profit = revenue - totalCost;
     final notes = _orderData['notes']?.toString().trim() ?? '';
@@ -366,12 +373,6 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
     return time.isNotEmpty ? time : '-';
   }
 
-  double _toDouble(dynamic value) {
-    if (value is num) {
-      return value.toDouble();
-    }
-    return double.tryParse(value?.toString() ?? '') ?? 0;
-  }
 }
 
 class _PhotoSectionCard extends StatelessWidget {
@@ -473,7 +474,17 @@ class _OrderPhotoThumb extends StatelessWidget {
   Widget build(BuildContext context) {
     final image = kIsWeb
         ? Image.network(path, fit: BoxFit.cover)
-        : Image.file(File(path), fit: BoxFit.cover);
+        : Image.file(
+            File(path),
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => const SizedBox(
+              width: 160,
+              child: ColoredBox(
+                color: Color(0xFF2A2A2A),
+                child: Icon(Icons.broken_image_outlined, color: Colors.white54),
+              ),
+            ),
+          );
 
     return GestureDetector(
       onTap: onOpen,
@@ -551,7 +562,15 @@ class _OrderPhotoViewer extends StatelessWidget {
   Widget build(BuildContext context) {
     final image = kIsWeb
         ? Image.network(photoPath, fit: BoxFit.contain)
-        : Image.file(File(photoPath), fit: BoxFit.contain);
+        : Image.file(
+            File(photoPath),
+            fit: BoxFit.contain,
+            errorBuilder: (_, _, _) => const Icon(
+              Icons.broken_image_outlined,
+              color: Colors.white54,
+              size: 64,
+            ),
+          );
 
     return Scaffold(
       backgroundColor: Colors.black,

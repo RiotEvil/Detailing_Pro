@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'dart:async';
+import 'dart:io' show ContentType, HttpClient, HttpHeaders;
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -7,6 +11,8 @@ import 'constants.dart';
 
 class CloudProfileSync {
   CloudProfileSync._();
+
+  static const String _functionsRegion = 'europe-west3';
 
   static bool get _firebaseReady => Firebase.apps.isNotEmpty;
 
@@ -33,7 +39,6 @@ class CloudProfileSync {
         (user.displayName ?? fallbackName ?? user.email ?? 'user')
             .trim()
             .toLowerCase();
-    final normalizedEmail = (user.email ?? '').trim().toLowerCase();
     await FirebaseFirestore.instance
         .collection('public_users')
         .doc(user.uid)
@@ -41,9 +46,10 @@ class CloudProfileSync {
           'uid': user.uid,
           'displayName':
               user.displayName ?? fallbackName ?? user.email ?? 'user',
-          'email': user.email,
           'searchName': normalizedName,
-          'searchEmail': normalizedEmail,
+          // Keep previously leaked fields removed when merging profile updates.
+          'email': FieldValue.delete(),
+          'searchEmail': FieldValue.delete(),
           'updatedAt': FieldValue.serverTimestamp(),
           'createdAt': FieldValue.serverTimestamp(),
         }, SetOptions(merge: true));
@@ -61,65 +67,58 @@ class CloudProfileSync {
       return;
     }
 
-    final firestore = FirebaseFirestore.instance;
     final orgId = 'org_${user.uid}';
 
-    final organizations = firestore.collection('organizations');
-    final users = firestore.collection('users');
-
-    await organizations.doc(orgId).set({
-      'orgId': orgId,
-      'ownerId': user.uid,
-      'businessMode': mode.name,
-      'updatedAt': FieldValue.serverTimestamp(),
-      'createdAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-
-    final role = mode == BusinessMode.team
-        ? AppRole.director.name
-        : AppRole.masterOwner.name;
-
-    await users.doc(user.uid).set({
-      'orgId': orgId,
-      'businessMode': mode.name,
-      'role': role,
-      'updatedAt': FieldValue.serverTimestamp(),
-      'createdAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-
-    await firestore.collection('public_users').doc(user.uid).set({
-      'orgId': orgId,
-      'businessMode': mode.name,
-      'role': role,
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+    // Sensitive access fields are written only via Admin SDK Cloud Function.
+    await _callSetBusinessMode(user, mode);
 
     await ensurePlanDefaults(orgId: orgId);
   }
 
+  /// Calls the `setBusinessMode` Cloud Function to write privilege-sensitive
+  /// fields (`orgId`, `role`, `businessMode`) to `users` and `public_users`.
+  static Future<void> _callSetBusinessMode(User user, BusinessMode mode) async {
+    final projectId = Firebase.app().options.projectId;
+    if (projectId.isEmpty) {
+      throw Exception('setBusinessMode failed: missing projectId');
+    }
+
+    final idToken = await user.getIdToken();
+    if (idToken == null || idToken.isEmpty) {
+      throw Exception('setBusinessMode failed: missing idToken');
+    }
+
+    final uri = Uri.parse(
+      'https://$_functionsRegion-$projectId.cloudfunctions.net/setBusinessMode',
+    );
+    final client = HttpClient()
+      ..connectionTimeout = const Duration(seconds: 15);
+
+    try {
+      final request = await client.postUrl(uri);
+      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $idToken');
+      request.headers.contentType = ContentType.json;
+      request.add(utf8.encode(jsonEncode({'mode': mode.name})));
+
+      final response = await request.close().timeout(
+        const Duration(seconds: 15),
+      );
+      final body = await utf8.decoder.bind(response).join();
+
+      if (response.statusCode != 200) {
+        throw Exception('setBusinessMode failed: ${response.statusCode} $body');
+      }
+    } catch (e) {
+      rethrow;
+    } finally {
+      client.close(force: true);
+    }
+  }
+
   static Future<void> syncRole(AppRole role) async {
-    if (!_firebaseReady) {
-      return;
-    }
-
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      return;
-    }
-
-    final users = FirebaseFirestore.instance.collection('users');
-    await users.doc(user.uid).set({
-      'role': role.name,
-      'updatedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-
-    await FirebaseFirestore.instance
-        .collection('public_users')
-        .doc(user.uid)
-        .set({
-          'role': role.name,
-          'updatedAt': FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+    // Role is set via the setBusinessMode Cloud Function (Admin SDK).
+    // Direct client writes of `role` are intentionally omitted to prevent
+    // privilege escalation. This method is kept for API compatibility only.
   }
 
   static Future<void> ensurePlanDefaults({String? orgId}) async {
@@ -207,29 +206,27 @@ class CloudProfileSync {
       return null;
     }
 
-    final snapshot = await FirebaseFirestore.instance
+    final userSnap = await FirebaseFirestore.instance
         .collection('users')
         .doc(user.uid)
         .get();
 
-    final data = snapshot.data();
-    if (data == null) {
+    final userData = userSnap.data();
+    if (userData == null) {
       return null;
     }
 
-    final mode = data['businessMode']?.toString();
-    final role = data['role']?.toString();
-    final orgId = data['orgId']?.toString();
-    final plan = data['plan']?.toString();
-    final planStatus = data['planStatus']?.toString();
+    Map<String, dynamic>? orgData;
+    final orgId = userData['orgId']?.toString();
+    if (orgId != null && orgId.isNotEmpty) {
+      final orgSnap = await FirebaseFirestore.instance
+          .collection('organizations')
+          .doc(orgId)
+          .get();
+      orgData = orgSnap.data();
+    }
 
-    return {
-      if (mode != null && mode.isNotEmpty) 'businessMode': mode,
-      if (role != null && role.isNotEmpty) 'appRole': role,
-      if (orgId != null && orgId.isNotEmpty) 'orgId': orgId,
-      if (plan != null && plan.isNotEmpty) 'appPlan': plan,
-      if (planStatus != null && planStatus.isNotEmpty) 'planStatus': planStatus,
-    };
+    return _composeAccessProfile(userData, orgData);
   }
 
   static Stream<Map<String, String>> watchAccessProfile() {
@@ -242,31 +239,90 @@ class CloudProfileSync {
       return const Stream<Map<String, String>>.empty();
     }
 
-    return FirebaseFirestore.instance
+    // Manual switchMap: cancel the org subscription only when orgId changes,
+    // preventing stale Firestore listener accumulation.
+    final controller = StreamController<Map<String, String>>();
+    StreamSubscription<dynamic>? orgSub;
+    String? trackedOrgId;
+    Map<String, dynamic>? latestUserData;
+    Map<String, dynamic>? latestOrgData;
+
+    final userSub = FirebaseFirestore.instance
         .collection('users')
         .doc(user.uid)
         .snapshots()
-        .map((snapshot) {
-          final data = snapshot.data();
-          if (data == null) {
-            return <String, String>{};
-          }
+        .listen(
+          (userSnap) {
+            latestUserData = userSnap.data();
+            if (latestUserData == null) {
+              controller.add(<String, String>{});
+              return;
+            }
+            final orgId = latestUserData!['orgId']?.toString();
+            if (orgId == null || orgId.isEmpty) {
+              orgSub?.cancel();
+              orgSub = null;
+              trackedOrgId = null;
+              latestOrgData = null;
+              controller.add(_composeAccessProfile(latestUserData!, null));
+              return;
+            }
+            if (orgId == trackedOrgId) {
+              // orgId unchanged — emit with cached org data in case user fields changed.
+              controller.add(_composeAccessProfile(latestUserData!, latestOrgData));
+              return;
+            }
+            // orgId changed — cancel previous org listener and start fresh.
+            orgSub?.cancel();
+            trackedOrgId = orgId;
+            latestOrgData = null;
+            orgSub = FirebaseFirestore.instance
+                .collection('organizations')
+                .doc(orgId)
+                .snapshots()
+                .listen(
+                  (orgSnap) {
+                    latestOrgData = orgSnap.data();
+                    if (latestUserData != null) {
+                      controller.add(
+                        _composeAccessProfile(latestUserData!, latestOrgData),
+                      );
+                    }
+                  },
+                  onError: controller.addError,
+                );
+          },
+          onError: controller.addError,
+          onDone: controller.close,
+        );
 
-          final mode = data['businessMode']?.toString();
-          final role = data['role']?.toString();
-          final orgId = data['orgId']?.toString();
-          final plan = data['plan']?.toString();
-          final planStatus = data['planStatus']?.toString();
+    controller.onCancel = () {
+      userSub.cancel();
+      orgSub?.cancel();
+    };
 
-          return {
-            if (mode != null && mode.isNotEmpty) 'businessMode': mode,
-            if (role != null && role.isNotEmpty) 'appRole': role,
-            if (orgId != null && orgId.isNotEmpty) 'orgId': orgId,
-            if (plan != null && plan.isNotEmpty) 'appPlan': plan,
-            if (planStatus != null && planStatus.isNotEmpty)
-              'planStatus': planStatus,
-          };
-        });
+    return controller.stream;
+  }
+
+  static Map<String, String> _composeAccessProfile(
+    Map<String, dynamic> userData,
+    Map<String, dynamic>? orgData,
+  ) {
+    final mode = userData['businessMode']?.toString();
+    final role = userData['role']?.toString();
+    final orgId = userData['orgId']?.toString();
+    final plan = orgData?['plan']?.toString() ?? userData['plan']?.toString();
+    final planStatus =
+        orgData?['planStatus']?.toString() ??
+        userData['planStatus']?.toString();
+
+    return {
+      if (mode != null && mode.isNotEmpty) 'businessMode': mode,
+      if (role != null && role.isNotEmpty) 'appRole': role,
+      if (orgId != null && orgId.isNotEmpty) 'orgId': orgId,
+      if (plan != null && plan.isNotEmpty) 'appPlan': plan,
+      if (planStatus != null && planStatus.isNotEmpty) 'planStatus': planStatus,
+    };
   }
 
   /// Syncs the studio's booking schedule to Firestore so that the

@@ -5,22 +5,67 @@ service firebase.storage {
       return request.auth != null;
     }
 
-    function userOrgId() {
+    function userDoc() {
       return firestore.get(
         /databases/(default)/documents/users/$(request.auth.uid)
-      ).data.orgId;
+      );
+    }
+
+    function userOrgId() {
+      return userDoc().data.orgId;
+    }
+
+    function orgDoc(orgId) {
+      return firestore.get(
+        /databases/(default)/documents/organizations/$(orgId)
+      );
+    }
+
+    function planStatusGrantsAccess(status) {
+      return status in ['active', 'trial', 'grace'];
+    }
+
+    function orgHasProAccess(orgId) {
+      let data = orgDoc(orgId).data;
+      let plan = data.plan;
+      let status = data.planStatus;
+      return (plan == 'pro' || plan == 'business') &&
+          planStatusGrantsAccess(status);
     }
 
     function hasOrgAccess(orgId) {
       return isSignedIn() && userOrgId() == orgId;
     }
 
-    match /organizations/{orgId}/{allPaths=**} {
-      allow read, write: if hasOrgAccess(orgId);
+    function callerHasProAccess() {
+      let orgId = userOrgId();
+      return orgId is string && orgId.size() > 0 && orgHasProAccess(orgId);
     }
 
-    match /chat/global/{allPaths=**} {
-      allow read, write: if isSignedIn();
+    // Chat attachments (Pro feature).
+    match /organizations/{orgId}/chat/{allPaths=**} {
+      allow read: if hasOrgAccess(orgId);
+      allow write: if hasOrgAccess(orgId)
+        && orgHasProAccess(orgId)
+        && request.resource.size < 10 * 1024 * 1024;
+    }
+
+    match /organizations/{orgId}/{allPaths=**} {
+      allow read: if hasOrgAccess(orgId);
+      allow write: if hasOrgAccess(orgId) && request.resource.size < 10 * 1024 * 1024;
+    }
+
+    match /chat/global/{roomId}/{allFiles=**} {
+      // Only the two participants of the direct room can access its files.
+      // roomId format: "uid1__uid2" (sorted UIDs joined with "__").
+      allow read: if isSignedIn()
+        && (roomId.matches(request.auth.uid + '__.*')
+            || roomId.matches('.*__' + request.auth.uid));
+      allow write: if isSignedIn()
+        && callerHasProAccess()
+        && (roomId.matches(request.auth.uid + '__.*')
+            || roomId.matches('.*__' + request.auth.uid))
+        && request.resource.size < 10 * 1024 * 1024;
     }
   }
 }

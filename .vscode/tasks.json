@@ -1,0 +1,17 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "build-aab-release",
+			"type": "shell",
+			"command": "flutter",
+			"args": [
+				"build",
+				"appbundle",
+				"--release",
+				"--dart-define-from-file=build_config.env"
+			],
+			"isBackground": false
+		}
+	]
+}

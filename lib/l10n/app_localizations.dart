@@ -1736,7 +1736,7 @@ abstract class AppLocalizations {
   /// No description provided for @authPasswordMin.
   ///
   /// In en, this message translates to:
-  /// **'Minimum 6 characters'**
+  /// **'Minimum 8 characters'**
   String get authPasswordMin;
 
   /// No description provided for @authFirebaseGuestOnly.
@@ -2507,6 +2507,48 @@ abstract class AppLocalizations {
   /// **'Open'**
   String get settingsBookingLinkOpen;
 
+  /// No description provided for @settingsWorkingHoursTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Working hours'**
+  String get settingsWorkingHoursTitle;
+
+  /// No description provided for @settingsWorkingHoursSlotLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Slot'**
+  String get settingsWorkingHoursSlotLabel;
+
+  /// No description provided for @settingsWorkingHoursMinNoticeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Min notice'**
+  String get settingsWorkingHoursMinNoticeLabel;
+
+  /// No description provided for @settingsWorkingHoursBreakLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Break'**
+  String get settingsWorkingHoursBreakLabel;
+
+  /// No description provided for @settingsWorkingHoursNotice1Hour.
+  ///
+  /// In en, this message translates to:
+  /// **'1 hour'**
+  String get settingsWorkingHoursNotice1Hour;
+
+  /// No description provided for @settingsWorkingHoursNotice2Hours.
+  ///
+  /// In en, this message translates to:
+  /// **'2 hours'**
+  String get settingsWorkingHoursNotice2Hours;
+
+  /// No description provided for @settingsWorkingHoursNotice24Hours.
+  ///
+  /// In en, this message translates to:
+  /// **'24 hours'**
+  String get settingsWorkingHoursNotice24Hours;
+
   /// No description provided for @bookingRequestsTitle.
   ///
   /// In en, this message translates to:
@@ -2603,6 +2645,36 @@ abstract class AppLocalizations {
   /// **'Declined'**
   String get bookingRequestStatusDeclined;
 
+  /// No description provided for @bookingRequestsFilterAll.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get bookingRequestsFilterAll;
+
+  /// No description provided for @bookingRequestsEmptyNew.
+  ///
+  /// In en, this message translates to:
+  /// **'No new requests'**
+  String get bookingRequestsEmptyNew;
+
+  /// No description provided for @bookingRequestsAcceptedFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Request accepted — order will be created automatically'**
+  String get bookingRequestsAcceptedFeedback;
+
+  /// No description provided for @bookingRequestsDeclinedFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Request declined'**
+  String get bookingRequestsDeclinedFeedback;
+
+  /// No description provided for @bookingRequestsDeclineConfirmContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline this booking request?'**
+  String get bookingRequestsDeclineConfirmContent;
+
   /// No description provided for @enterServiceName.
   ///
   /// In en, this message translates to:
@@ -2614,6 +2686,204 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter a valid price (0 or more)'**
   String get invalidPrice;
+
+  /// No description provided for @invoiceTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'INVOICE'**
+  String get invoiceTitle;
+
+  /// No description provided for @invoiceNumberPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'INV'**
+  String get invoiceNumberPrefix;
+
+  /// No description provided for @invoiceSeller.
+  ///
+  /// In en, this message translates to:
+  /// **'SELLER'**
+  String get invoiceSeller;
+
+  /// No description provided for @invoiceBuyer.
+  ///
+  /// In en, this message translates to:
+  /// **'BUYER'**
+  String get invoiceBuyer;
+
+  /// No description provided for @invoiceIssueDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Issue date'**
+  String get invoiceIssueDateLabel;
+
+  /// No description provided for @invoiceServiceDateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Service date'**
+  String get invoiceServiceDateLabel;
+
+  /// No description provided for @invoiceDescriptionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Description'**
+  String get invoiceDescriptionLabel;
+
+  /// No description provided for @invoiceQtyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Qty'**
+  String get invoiceQtyLabel;
+
+  /// No description provided for @invoiceNetPriceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Net price'**
+  String get invoiceNetPriceLabel;
+
+  /// No description provided for @invoiceVatPctLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'VAT %'**
+  String get invoiceVatPctLabel;
+
+  /// No description provided for @invoiceVatAmountLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'VAT amount'**
+  String get invoiceVatAmountLabel;
+
+  /// No description provided for @invoiceGrossPriceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Gross price'**
+  String get invoiceGrossPriceLabel;
+
+  /// No description provided for @invoiceNetTotalLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Net total:'**
+  String get invoiceNetTotalLabel;
+
+  /// No description provided for @invoiceVatLineLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'VAT {rate}:'**
+  String invoiceVatLineLabel(Object rate);
+
+  /// No description provided for @invoiceTotalDueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'TOTAL DUE:'**
+  String get invoiceTotalDueLabel;
+
+  /// No description provided for @invoiceFillCompanyLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Fill in company data'**
+  String get invoiceFillCompanyLabel;
+
+  /// No description provided for @invoiceIssuedByLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Invoice issued by'**
+  String get invoiceIssuedByLabel;
+
+  /// No description provided for @invoicePrimaryIdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax ID'**
+  String get invoicePrimaryIdLabel;
+
+  /// No description provided for @invoiceSecondaryIdLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Business ID'**
+  String get invoiceSecondaryIdLabel;
+
+  /// No description provided for @settingsSeatUsage.
+  ///
+  /// In en, this message translates to:
+  /// **'{used} / {total} seats'**
+  String settingsSeatUsage(Object total, Object used);
+
+  /// No description provided for @syncOfflineWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'No internet connection. Data may be outdated.'**
+  String get syncOfflineWarning;
+
+  /// No description provided for @forceUpdateTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update required'**
+  String get forceUpdateTitle;
+
+  /// No description provided for @forceUpdateMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'A new version of the app is available. Please update to continue using Detailing Pro.'**
+  String get forceUpdateMessage;
+
+  /// No description provided for @forceUpdateButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get forceUpdateButton;
+
+  /// No description provided for @storageStartupTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Local storage unavailable'**
+  String get storageStartupTitle;
+
+  /// No description provided for @storageStartupBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Detailing Pro could not open its encrypted database. Your data on this device may be protected or corrupted.'**
+  String get storageStartupBody;
+
+  /// No description provided for @storageStartupHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Try fully closing the app and opening it again. If the problem continues, reinstall the app (cloud data will remain if you sign in with the same account).'**
+  String get storageStartupHint;
+
+  /// No description provided for @storageStartupCloseApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Close app'**
+  String get storageStartupCloseApp;
+
+  /// No description provided for @settingsSyncStatusTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cloud sync'**
+  String get settingsSyncStatusTitle;
+
+  /// No description provided for @settingsSyncPendingMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} changes waiting to sync'**
+  String settingsSyncPendingMessage(int count);
+
+  /// No description provided for @settingsSyncFailedMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} changes could not sync to the cloud'**
+  String settingsSyncFailedMessage(int count);
+
+  /// No description provided for @settingsSyncRetryButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry sync'**
+  String get settingsSyncRetryButton;
+
+  /// No description provided for @settingsSyncDiscardButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard failed changes'**
+  String get settingsSyncDiscardButton;
 }
 
 class _AppLocalizationsDelegate

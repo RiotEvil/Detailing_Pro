@@ -31,6 +31,85 @@ service cloud.firestore {
       return userDoc().data.role;
     }
 
+    function orgDoc(orgId) {
+      return get(/databases/$(database)/documents/organizations/$(orgId));
+    }
+
+    function orgPlan(orgId) {
+      return orgDoc(orgId).data.plan;
+    }
+
+    function orgPlanStatus(orgId) {
+      return orgDoc(orgId).data.planStatus;
+    }
+
+    function planStatusGrantsAccess(status) {
+      return status in ['active', 'trial', 'grace'];
+    }
+
+    function orgHasProAccess(orgId) {
+      return orgPlan(orgId) in ['pro', 'business'] &&
+          planStatusGrantsAccess(orgPlanStatus(orgId));
+    }
+
+    function orgHasBusinessAccess(orgId) {
+      return orgPlan(orgId) == 'business' &&
+          planStatusGrantsAccess(orgPlanStatus(orgId));
+    }
+
+    function callerOrgId() {
+      return userDoc().data.orgId;
+    }
+
+    function callerHasProAccess() {
+      let orgId = callerOrgId();
+      return orgId is string && orgId.size() > 0 && orgHasProAccess(orgId);
+    }
+
+    function touchesBookingSchedule() {
+      return request.resource.data.diff(resource.data)
+          .affectedKeys().hasAny(['bookingSchedule']);
+    }
+
+    function clientCount(orgId) {
+      let count = orgDoc(orgId).data.clientCount;
+      return count is int ? count : 0;
+    }
+
+    // Returns true if the org is on a paid plan or within the free client limit.
+    function withinClientLimit(orgId) {
+      return orgPlan(orgId) in ['pro', 'business'] ||
+          clientCount(orgId) < 20;
+    }
+
+    function currentMonthKey() {
+      return string(request.time.year()) + '-' + string(request.time.month());
+    }
+
+    function activeOrdersThisMonth(orgId) {
+      let data = orgDoc(orgId).data;
+      let storedKey = data.activeOrdersMonthKey;
+      let count = data.activeOrdersThisMonthCount;
+      return storedKey is string && storedKey == currentMonthKey()
+          ? (count is int ? count : 0)
+          : 0;
+    }
+
+    function orderIsActive(data) {
+      let status = data.status;
+      return status != 'completed' && status != 'paid';
+    }
+
+    function orderBecomingActive() {
+      return !orderIsActive(resource.data) && orderIsActive(request.resource.data);
+    }
+
+    // Free plan: max 10 non-completed/non-paid orders in the current calendar month.
+    function withinOrderLimit(orgId) {
+      return orgPlan(orgId) in ['pro', 'business'] ||
+          activeOrdersThisMonth(orgId) < 10;
+    }
+
     function canWriteOrderData(data) {
       return data.assignedToUid == null ||
           data.assignedToUid == '' ||
@@ -48,7 +127,10 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if isSignedIn() && (currentUid() == userId || hasAdminRights());
+      allow read: if isSignedIn() && (
+          currentUid() == userId ||
+          (hasAdminRights() && resource.data.orgId == userOrgId())
+      );
       // Block creating user profile with sensitive access/billing fields.
       allow create: if isSignedIn() && currentUid() == userId
           && !request.resource.data.keys().hasAny([
@@ -67,21 +149,52 @@ service cloud.firestore {
             'plan',
             'planStatus',
             'billingProvider',
-          ]);
+          ])
+          && (!touchesBookingSchedule() || callerHasProAccess());
       allow delete: if false;
     }
 
     match /public_users/{userId} {
-      allow read: if isSignedIn();
+      // Public profiles are visible only for own doc or same-organization users.
+      allow get, list: if isSignedIn() && (
+          currentUid() == userId ||
+          resource.data.orgId == userOrgId()
+      );
       allow create, update: if isSignedIn() && currentUid() == userId;
       allow delete: if false;
     }
 
     match /organizations/{orgId} {
-      // Allow public read of basic org info (name, businessMode) for booking pages.
-      allow read: if true;
-      allow create: if isSignedIn() && request.resource.data.ownerId == currentUid();
-      allow update: if hasOrgAccess(orgId) && hasAdminRights();
+      allow read: if hasOrgAccess(orgId);
+      // Billing fields are managed only by backend/Admin SDK.
+      allow create: if isSignedIn()
+          && request.resource.data.ownerId == currentUid()
+          && !request.resource.data.keys().hasAny([
+            'plan',
+            'planStatus',
+            'billingProvider',
+            'seatLimit',
+            'clientCount',
+            'clientCountUpdatedAt',
+            'activeOrdersThisMonthCount',
+            'activeOrdersMonthKey',
+            'activeOrdersQuotaUpdatedAt',
+            'quotasInitializedAt',
+          ]);
+      allow update: if hasOrgAccess(orgId)
+          && hasAdminRights()
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+            'plan',
+            'planStatus',
+            'billingProvider',
+            'seatLimit',
+            'clientCount',
+            'clientCountUpdatedAt',
+            'activeOrdersThisMonthCount',
+            'activeOrdersMonthKey',
+            'activeOrdersQuotaUpdatedAt',
+            'quotasInitializedAt',
+          ]);
       allow delete: if false;
     }
 
@@ -90,9 +203,13 @@ service cloud.firestore {
     // Only directors / owners may DELETE.
     match /organizations/{orgId}/orders/{orderId} {
       allow read: if hasOrgAccess(orgId);
-      allow create: if hasOrgAccess(orgId) && (hasAdminRights() || canMasterCreateOrder());
+      allow create: if hasOrgAccess(orgId)
+          && (hasAdminRights() || canMasterCreateOrder())
+          && (!orderIsActive(request.resource.data) || withinOrderLimit(orgId));
       allow delete: if hasOrgAccess(orgId) && hasAdminRights();
-      allow update: if hasOrgAccess(orgId) && (hasAdminRights() || canMasterUpdateOrder());
+      allow update: if hasOrgAccess(orgId)
+          && (hasAdminRights() || canMasterUpdateOrder())
+          && (!orderBecomingActive() || withinOrderLimit(orgId));
     }
 
     // ── Clients ─────────────────────────────────────────────────────
@@ -100,17 +217,18 @@ service cloud.firestore {
     // Only admins may DELETE clients.
     match /organizations/{orgId}/clients/{clientId} {
       allow read: if hasOrgAccess(orgId);
-      allow create, update: if hasOrgAccess(orgId);
+      allow create: if hasOrgAccess(orgId) && withinClientLimit(orgId);
+      allow update: if hasOrgAccess(orgId);
       allow delete: if hasOrgAccess(orgId) && hasAdminRights();
     }
 
     // ── Inventory ───────────────────────────────────────────────────
     // All org members can READ inventory.
-    // Admins can do full CRUD; masters can only UPDATE (restock / status).
+    // Admins can do full CRUD; masters can also UPDATE (restock / status).
     match /organizations/{orgId}/inventory/{itemId} {
       allow read: if hasOrgAccess(orgId);
       allow create, delete: if hasOrgAccess(orgId) && hasAdminRights();
-      allow update: if hasOrgAccess(orgId) && hasAdminRights();
+      allow update: if hasOrgAccess(orgId) && (hasAdminRights() || userRole() == 'master');
     }
 
     match /organizations/{orgId}/services/{serviceId} {
@@ -157,56 +275,25 @@ service cloud.firestore {
     // Clients can submit requests without authentication.
     // Only the target specialist (masterUid) can read and update status.
     match /booking_requests/{requestId} {
-      allow create: if request.resource.data.masterUid is string
-        && request.resource.data.masterUid.size() > 0
-          && request.resource.data.masterUid.size() <= 128
-        && request.resource.data.clientName is string
-          && request.resource.data.clientName.size() > 0
-          && request.resource.data.clientName.size() <= 100
-        && (!('clientPhone' in request.resource.data)
-          || request.resource.data.clientPhone == null
-          || (request.resource.data.clientPhone is string
-            && request.resource.data.clientPhone.size() <= 30))
-        && (!('clientEmail' in request.resource.data)
-          || request.resource.data.clientEmail == null
-          || (request.resource.data.clientEmail is string
-            && request.resource.data.clientEmail.size() <= 120))
-        && request.resource.data['service'] is string
-          && request.resource.data['service'].size() > 0
-          && request.resource.data['service'].size() <= 200
-        && request.resource.data.car is string
-          && request.resource.data.car.size() > 0
-          && request.resource.data.car.size() <= 100
-        && (!('note' in request.resource.data)
-          || request.resource.data.note == null
-          || (request.resource.data.note is string
-            && request.resource.data.note.size() <= 1000))
-        && (!('preferredDate' in request.resource.data)
-          || request.resource.data.preferredDate == null
-          || (request.resource.data.preferredDate is string
-            && request.resource.data.preferredDate.size() <= 32))
-        && (!('preferredTime' in request.resource.data)
-          || request.resource.data.preferredTime == null
-          || (request.resource.data.preferredTime is string
-            && request.resource.data.preferredTime.size() <= 32))
-        && (!('locale' in request.resource.data)
-          || request.resource.data.locale == null
-          || (request.resource.data.locale is string
-            && request.resource.data.locale.size() <= 10))
-        && (!('source' in request.resource.data)
-          || request.resource.data.source == null
-          || (request.resource.data.source is string
-            && request.resource.data.source.size() <= 40))
-          && request.resource.data.status == 'pending'
-          // Restrict allowed fields to prevent arbitrary data injection
-          && request.resource.data.keys().hasOnly([
-          'masterUid', 'clientName', 'clientPhone', 'clientEmail',
-          'service', 'car', 'status', 'createdAt', 'note',
-          'preferredDate', 'preferredTime', 'locale', 'source'
-          ]);
+      // Create is performed only by backend Cloud Function (Admin SDK).
+      allow create: if false;
 
-      allow read, update: if isSignedIn() &&
-          resource.data.masterUid == currentUid();
+      allow read: if isSignedIn()
+          && resource.data.masterUid == currentUid()
+          && callerHasProAccess();
+
+      // State machine: client can only transition pending → accepted or pending → declined.
+      // All import-related fields (importedToApp, importedAt, importedOrderId, importedClientId)
+      // are now written exclusively by the backend Cloud Function via Admin SDK.
+      allow update: if isSignedIn()
+          && resource.data.masterUid == currentUid()
+          && callerHasProAccess()
+          && resource.data.status == 'pending'
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            'status',
+            'updatedAt',
+          ])
+          && request.resource.data.status in ['accepted', 'declined'];
 
       allow delete: if false;
     }
@@ -219,20 +306,20 @@ service cloud.firestore {
     }
 
     // ── Invite codes ─────────────────────────────────────────────────
-    // Any authenticated user can read an invite (to validate on registration).
-    // Only directors / owners may create new invites.
-    // Any authenticated user may claim (mark as used) an unused invite —
-    //   the rule guards against double-use via resource.data.used == false.
+    // Access is limited to admins within their own organization.
     match /invites/{code} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && hasAdminRights();
-      // Only allow claiming an unused invite; restrict changeable fields
-      // to prevent tampering with orgId/role after claiming.
-      allow update: if isSignedIn()
-          && resource.data.used == false
-          && request.resource.data.diff(resource.data).affectedKeys()
-              .hasOnly(['used', 'usedBy', 'usedAt']);
+      allow get, list: if hasAdminRights() && resource.data.orgId == userOrgId();
+      allow create: if hasAdminRights()
+          && request.resource.data.orgId == userOrgId()
+          && request.resource.data.directorUid == currentUid();
+      allow update: if false;
       allow delete: if false;
+    }
+
+    // ── Invite rate-limiting counters ─────────────────────────────────
+    // Each user can only write to their own attempt counter doc.
+    match /invite_attempts/{uid} {
+      allow read, write: if isSignedIn() && currentUid() == uid;
     }
   }
 }

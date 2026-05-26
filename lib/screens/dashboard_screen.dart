@@ -55,7 +55,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         continue;
       }
 
-      final selectedChems = List.from(service['chemistry'] as List);
+      final chemRaw = service['chemistry'];
+      if (chemRaw is! List) continue;
+      final selectedChems = List.from(chemRaw);
       final consumption = (service['chemAmount'] as num?)?.toInt() ?? 0;
       final perChemConsumption = selectedChems.isEmpty
           ? consumption
@@ -63,7 +65,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       for (final chemName in selectedChems) {
         final invKey = inventoryBox.keys.firstWhere(
-          (k) => inventoryBox.get(k)['name'] == chemName,
+          (k) {
+            final v = inventoryBox.get(k);
+            return v is Map && v['name'] == chemName;
+          },
           orElse: () => null,
         );
 
@@ -149,25 +154,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
             final scheduledDate = (o['scheduledDate'] as num?)?.toInt();
             if (scheduledDate == null || scheduledDate <= 0) continue;
             final date = DateTime.fromMillisecondsSinceEpoch(scheduledDate);
-            if (date.isAfter(todayStart) && date.isBefore(todayEnd)) {
+            if (!date.isBefore(todayStart) && date.isBefore(todayEnd)) {
               todayOrders.add(o);
               todayKeys.add(key);
             }
           }
 
-          final activeOrders = orderEntries.where((entry) {
+          final inProgressOrders = orderEntries.where((entry) {
             final o = entry.value;
             final status = OrderStatus.fromName(o['status']?.toString());
-            return status != OrderStatus.completed &&
-                status != OrderStatus.paid;
+            return status == OrderStatus.inProgress;
           }).toList();
 
-          unawaited(
+          WidgetsBinding.instance.addPostFrameCallback((_) {
             OrderReminderService.syncForOrders(
               orders: orderEntries.map((entry) => entry.value),
               l10n: l10n,
-            ),
-          );
+            ).ignore();
+          });
 
           double todayRevenue = 0;
           for (final order in todayOrders) {
@@ -222,7 +226,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                           StatCard(
                             title: l10n.statsInWork,
-                            value: '${activeOrders.length}',
+                            value: '${inProgressOrders.length}',
                             icon: Icons.build,
                             color: AppColors.warning,
                             onTap: () => Navigator.push(

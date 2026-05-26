@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'constants.dart';
+import 'onboarding_prefs.dart';
 
 // Boxes that contain personal or sensitive data and must be encrypted.
 
@@ -13,6 +15,18 @@ final _secureStorage = const FlutterSecureStorage(
   aOptions: AndroidOptions(encryptedSharedPreferences: true),
 );
 
+/// Thrown when encrypted Hive boxes cannot be opened or migrated.
+class HiveStartupException implements Exception {
+  final String message;
+  final Object? cause;
+
+  HiveStartupException(this.message, [this.cause]);
+
+  @override
+  String toString() =>
+      cause == null ? message : '$message ($cause)';
+}
+
 /// Инициализация всех хранилищ Hive
 Future<void> setupHiveBoxes() async {
   try {
@@ -20,16 +34,17 @@ Future<void> setupHiveBoxes() async {
 
     // Open sensitive boxes with AES encryption, plain boxes without.
     await Future.wait([
-      _openBoxSafe(HiveBoxes.inventory),
-      _openBoxSafe(HiveBoxes.services),
-      _openBoxSafe(HiveBoxes.packages),
-      _openBoxSafe(HiveBoxes.photos),
-      _openBoxSafe(HiveBoxes.marketing),
+      _openBoxEncrypted(HiveBoxes.inventory, cipher),
+      _openBoxEncrypted(HiveBoxes.services, cipher),
+      _openBoxEncrypted(HiveBoxes.packages, cipher),
+      _openBoxEncrypted(HiveBoxes.photos, cipher),
+      _openBoxEncrypted(HiveBoxes.marketing, cipher),
       _openBoxEncrypted(HiveBoxes.settings, cipher),
       _openBoxEncrypted(HiveBoxes.clients, cipher),
       _openBoxEncrypted(HiveBoxes.orders, cipher),
       _openBoxEncrypted(HiveBoxes.finance, cipher),
       _openBoxEncrypted(HiveBoxes.vehicles, cipher),
+      _openBoxEncrypted(HiveBoxes.pendingWrites, cipher),
     ]);
 
     // Заполняем базу начальными данными, если она пуста
@@ -37,19 +52,50 @@ Future<void> setupHiveBoxes() async {
   } catch (e, stack) {
     debugPrint('Critical Hive setup error: $e');
     debugPrint(stack.toString());
+    Error.throwWithStackTrace(
+      HiveStartupException('Failed to initialize local storage', e),
+      stack,
+    );
   }
 }
 
 /// Returns an AES cipher backed by a key stored in the OS secure keystore.
 /// On first run a random 32-byte key is generated and persisted.
 Future<HiveAesCipher> _getOrCreateCipher() async {
-  String? b64 = await _secureStorage.read(key: _secureStorageKey);
+  String? b64;
+  try {
+    b64 = await _secureStorage.read(key: _secureStorageKey);
+  } on PlatformException {
+    // Android Keystore or EncryptedSharedPreferences lost access to the key
+    // (can happen after certain system security events or backup/restore).
+    // Boxes encrypted with the lost key are unrecoverable — nuke them.
+    // Cloud data is safe and will resync after the user signs in.
+    try { await _secureStorage.deleteAll(); } catch (_) {}
+    await _nukeAllHiveBoxFiles();
+    // b64 remains null → fresh key generated below.
+  }
   if (b64 == null) {
     final key = List<int>.generate(32, (_) => Random.secure().nextInt(256));
     b64 = base64UrlEncode(key);
     await _secureStorage.write(key: _secureStorageKey, value: b64);
   }
   return HiveAesCipher(base64Url.decode(b64));
+}
+
+/// Deletes all Hive box files from disk. Used when the encryption key is lost.
+Future<void> _nukeAllHiveBoxFiles() async {
+  const names = [
+    HiveBoxes.inventory, HiveBoxes.services, HiveBoxes.packages,
+    HiveBoxes.photos, HiveBoxes.marketing, HiveBoxes.settings,
+    HiveBoxes.clients, HiveBoxes.orders, HiveBoxes.finance,
+    HiveBoxes.vehicles, HiveBoxes.pendingWrites,
+  ];
+  for (final name in names) {
+    try {
+      if (Hive.isBoxOpen(name)) await Hive.box(name).close();
+      await Hive.deleteBoxFromDisk(name);
+    } catch (_) {}
+  }
 }
 
 /// Opens a box with AES encryption.
@@ -60,7 +106,10 @@ Future<Box<T>> _openBoxEncrypted<T>(String name, HiveAesCipher cipher) async {
 
   try {
     return await Hive.openBox<T>(name, encryptionCipher: cipher);
-  } catch (_) {
+  } catch (e) {
+    // Only treat HiveErrors as a legacy-unencrypted-box migration case.
+    // Any other exception (I/O, permissions, disk full) must propagate.
+    if (e is! HiveError) rethrow;
     // Box exists but is unencrypted — migrate to encrypted storage.
     debugPrint('[Hive] Migrating "$name" to encrypted storage …');
     final plain = await Hive.openBox<T>(name);
@@ -78,20 +127,13 @@ Future<Box<T>> _openBoxEncrypted<T>(String name, HiveAesCipher cipher) async {
   }
 }
 
-/// Открывает бокс, если он ещё не открыт. Это предотвращает ошибку
-/// "box is already open" при повторных вызовах.
-Future<Box<T>> _openBoxSafe<T>(String name) async {
-  if (Hive.isBoxOpen(name)) {
-    return Hive.box<T>(name);
-  }
-  return Hive.openBox<T>(name);
-}
 
 /// Агрегатор функций наполнения данными
 Future<void> _seedInitialData() async {
   await _seedInventory();
   await _seedServices();
   await _seedSettings();
+  await _migrateOnboardingDefaults();
   await _migrateInternationalDefaults();
   await _migratePlanDefaults();
   await _migrateInventorySchema();
@@ -363,6 +405,11 @@ Future<void> _migratePlanDefaults() async {
   if (box.get('billingProvider') == null) {
     await box.put('billingProvider', 'manual');
   }
+}
+
+Future<void> _migrateOnboardingDefaults() async {
+  final box = Hive.box(HiveBoxes.settings);
+  await OnboardingPrefs.ensureDefaults(box);
 }
 
 Future<void> _migrateClientIds() async {

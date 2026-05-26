@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../core/access_guard.dart';
 import '../core/constants.dart';
 import '../core/subscription_texts.dart';
+import '../models/model_utils.dart';
 import '../widgets/stat_card.dart';
 
 class StatsScreen extends StatefulWidget {
@@ -58,7 +59,10 @@ class _StatsScreenState extends State<StatsScreen> {
                   );
                   if (status == OrderStatus.completed ||
                       status == OrderStatus.paid) {
-                    totalRevenue += _toDouble(order['price']);
+                    totalRevenue += parseDouble(
+                      order['price'],
+                      field: 'Order.price',
+                    );
                     totalProfit += _profit(order);
                   }
                 }
@@ -339,26 +343,27 @@ class _StatsScreenState extends State<StatsScreen> {
     return null;
   }
 
-  double _toDouble(dynamic value) {
-    if (value is num) return value.toDouble();
-    return double.tryParse(value?.toString() ?? '') ?? 0;
-  }
-
   double _revenue(List<Map<String, dynamic>> orders) {
     double sum = 0;
     for (final order in orders) {
       final status = OrderStatus.fromName(order['status']?.toString());
       if (status == OrderStatus.completed || status == OrderStatus.paid) {
-        sum += _toDouble(order['price']);
+        sum += parseDouble(order['price'], field: 'Order.price');
       }
     }
     return sum;
   }
 
   double _profit(Map<String, dynamic> order) {
-    final revenue = _toDouble(order['price']);
-    final materialCost = _toDouble(order['materialCost']);
-    final laborCost = _toDouble(order['laborCost']);
+    final revenue = parseDouble(order['price'], field: 'Order.price');
+    final materialCost = parseDouble(
+      order['materialCost'],
+      field: 'Order.materialCost',
+    );
+    final laborCost = parseDouble(
+      order['laborCost'],
+      field: 'Order.laborCost',
+    );
     return revenue - materialCost - laborCost;
   }
 }

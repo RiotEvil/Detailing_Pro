@@ -2,15 +2,19 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_application_1/l10n/app_localizations.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../core/cloud_profile_sync.dart';
+import '../core/write_queue.dart';
 import '../core/access_guard.dart';
 import '../core/constants.dart';
 import '../core/invite_service.dart';
+import '../core/onboarding_prefs.dart';
 import '../core/subscription_texts.dart';
 import '../widgets/confirm_dialog.dart';
 import 'add_client_screen.dart';
@@ -27,8 +31,53 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  // Весь мировой запас валют для твоего детейлинга
   final List<String> _currencies = ['€', 'zł', '\$', '₽', '₺', 'R', '¥', '₴'];
+  int? _activeMemberCount;
+  int? _seatLimit;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSeatCount();
+  }
+
+  Future<void> _loadSeatCount() async {
+    if (Firebase.apps.isEmpty) return;
+    try {
+      final orgId = Hive.box(HiveBoxes.settings).get('orgId')?.toString() ?? '';
+      if (orgId.isEmpty) return;
+
+      final results = await Future.wait([
+        FirebaseFirestore.instance
+            .collection('users')
+            .where('orgId', isEqualTo: orgId)
+            .get(),
+        FirebaseFirestore.instance
+            .collection('organizations')
+            .doc(orgId)
+            .get(),
+      ]);
+
+      final usersSnap = results[0] as QuerySnapshot<Map<String, dynamic>>;
+      final orgSnap = results[1] as DocumentSnapshot<Map<String, dynamic>>;
+
+      final count = usersSnap.docs.where((d) {
+        final role = d.data()['role']?.toString();
+        return role == 'director' || role == 'masterOwner' || role == 'master';
+      }).length;
+
+      final limit = (orgSnap.data()?['seatLimit'] as num?)?.toInt();
+
+      if (mounted) {
+        setState(() {
+          _activeMemberCount = count;
+          _seatLimit = limit;
+        });
+      }
+    } catch (e) {
+      debugPrint('[Settings] loadSeatCount error: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +85,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     return ValueListenableBuilder(
-      valueListenable: settingsBox.listenable(),
+      valueListenable: settingsBox.listenable(
+        keys: [
+          'currency',
+          'locale',
+          'businessMode',
+          'appRole',
+          'appPlan',
+          'planStatus',
+          'authUserLabel',
+          'authMode',
+          'companyName',
+        ],
+      ),
       builder: (context, Box box, _) {
         final String currentCurr = box.get('currency', defaultValue: '€');
         final String currentLocale = box.get('locale', defaultValue: 'en');
@@ -107,7 +168,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                           )
                           .toList(),
-                      onChanged: (v) => settingsBox.put('currency', v),
+                      onChanged: (v) { if (v != null) settingsBox.put('currency', v); },
                     ),
                   ),
                   const Divider(height: 1),
@@ -164,7 +225,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           child: const Text("🇨🇳 简体中文"),
                         ),
                       ],
-                      onChanged: (v) => settingsBox.put('locale', v),
+                      onChanged: (v) { if (v != null) settingsBox.put('locale', v); },
                     ),
                   ),
                   const Divider(height: 1),
@@ -192,9 +253,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           color: AppColors.primary,
                         ),
                         title: Text(l10n.settingsInviteMasterTitle),
-                        subtitle: Text(l10n.settingsInviteMasterSubtitle),
+                        subtitle: _activeMemberCount != null
+                            ? Text(
+                                l10n.settingsSeatUsage(
+                                  _activeMemberCount!,
+                                  _seatLimit ?? (appPlan == AppPlan.business ? 5 : 1),
+                                ),
+                              )
+                            : Text(l10n.settingsInviteMasterSubtitle),
                         trailing: const Icon(Icons.chevron_right),
-                        onTap: () => _generateInviteCode(context, settingsBox),
+                        onTap: () async {
+                          await _generateInviteCode(context, settingsBox);
+                          _loadSeatCount();
+                        },
                       ),
                     ],
                   ],
@@ -266,7 +337,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const SizedBox(height: 8),
             _ActionButton(
               icon: Icons.schedule,
-              label: 'Working Hours',
+              label: l10n.settingsWorkingHoursTitle,
               onTap: () {
                 if (!AccessGuard.canUseOnlineBooking()) {
                   AccessGuard.showUpgradePrompt(
@@ -306,6 +377,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: SubscriptionTexts.releaseSectionTitle(context),
             ),
             const SizedBox(height: 12),
+            _ActionButton(
+              icon: Icons.school_outlined,
+              label: _onboardingUiText(context, 'restartTitle'),
+              onTap: () => _restartOnboardingFlow(context, settingsBox),
+            ),
+            const SizedBox(height: 8),
             Card(
               child: Column(
                 children: [
@@ -348,6 +425,83 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ],
               ),
+            ),
+
+            ListenableBuilder(
+              listenable: Listenable.merge([
+                WriteQueue.pendingCountNotifier,
+                WriteQueue.failedCountNotifier,
+              ]),
+              builder: (context, _) {
+                final pending = WriteQueue.pendingCount;
+                final failed = WriteQueue.failedCount;
+                if (pending == 0 && failed == 0) {
+                  return const SizedBox.shrink();
+                }
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 24),
+                    _SectionHeader(title: l10n.settingsSyncStatusTitle),
+                    const SizedBox(height: 12),
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (pending > 0)
+                              Text(l10n.settingsSyncPendingMessage(pending)),
+                            if (failed > 0) ...[
+                              if (pending > 0) const SizedBox(height: 8),
+                              Text(
+                                l10n.settingsSyncFailedMessage(failed),
+                                style: const TextStyle(color: AppColors.error),
+                              ),
+                            ],
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                FilledButton(
+                                  onPressed: () async {
+                                    await WriteQueue.retryFailed();
+                                    await WriteQueue.flush();
+                                    if (!context.mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: Text(l10n.settingsSyncRetryButton),
+                                      ),
+                                    );
+                                  },
+                                  child: Text(l10n.settingsSyncRetryButton),
+                                ),
+                                if (failed > 0)
+                                  OutlinedButton(
+                                    onPressed: () async {
+                                      await WriteQueue.discardFailed();
+                                      if (!context.mounted) return;
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            l10n.settingsSyncDiscardButton,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    child: Text(l10n.settingsSyncDiscardButton),
+                                  ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
 
             const SizedBox(height: 32),
@@ -436,12 +590,40 @@ class _SettingsScreenState extends State<SettingsScreen> {
       return;
     }
 
+    final previousMode = settingsBox.get('businessMode')?.toString();
+    final previousRole = settingsBox.get('appRole')?.toString();
+
     await settingsBox.put('businessMode', selectedMode.name);
     final role = selectedMode == BusinessMode.team
         ? AppRole.director
         : AppRole.masterOwner;
     await settingsBox.put('appRole', role.name);
-    await CloudProfileSync.syncBusinessMode(selectedMode);
+
+    try {
+      await CloudProfileSync.syncBusinessMode(selectedMode);
+    } catch (e) {
+      if (previousMode == null || previousMode.isEmpty) {
+        await settingsBox.delete('businessMode');
+      } else {
+        await settingsBox.put('businessMode', previousMode);
+      }
+
+      if (previousRole == null || previousRole.isEmpty) {
+        await settingsBox.delete('appRole');
+      } else {
+        await settingsBox.put('appRole', previousRole);
+      }
+
+      if (!context.mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.errorMessage(e.toString()))));
+      return;
+    }
+
     if (!context.mounted) {
       return;
     }
@@ -449,6 +631,63 @@ class _SettingsScreenState extends State<SettingsScreen> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(l10n.settingsModeUpdated)));
+  }
+
+  Future<void> _restartOnboardingFlow(
+    BuildContext context,
+    Box settingsBox,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(_onboardingUiText(context, 'restartTitle')),
+        content: Text(_onboardingUiText(context, 'restartConfirm')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(AppLocalizations.of(context)!.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(_onboardingUiText(context, 'restartAction')),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) {
+      return;
+    }
+
+    await OnboardingPrefs.resetForReplay(settingsBox);
+    if (!context.mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(_onboardingUiText(context, 'restartDone'))),
+    );
+  }
+
+  String _onboardingUiText(BuildContext context, String key) {
+    final lang = Localizations.localeOf(context).languageCode.toLowerCase();
+    final isRu = lang == 'ru';
+    final ru = {
+      'restartTitle': 'Повторить обучение',
+      'restartAction': 'Перезапустить',
+      'restartConfirm':
+          'Сбросить прогресс обучения и показать онбординг снова при следующем запуске?',
+      'restartDone': 'Обучение сброшено. Онбординг будет показан снова.',
+    };
+    final en = {
+      'restartTitle': 'Replay onboarding',
+      'restartAction': 'Restart',
+      'restartConfirm':
+          'Reset onboarding progress and show onboarding again on next launch?',
+      'restartDone': 'Onboarding reset. It will be shown again.',
+    };
+
+    return isRu ? (ru[key] ?? '') : (en[key] ?? '');
   }
 
   Future<void> _generateInviteCode(
@@ -552,10 +791,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _editCompanyData(BuildContext context, Box settingsBox) async {
     final l10n = AppLocalizations.of(context)!;
-    final locale =
-        settingsBox.get('locale', defaultValue: 'en')?.toString() ?? 'en';
-    final invoicePrimaryIdLabel = _invoicePrimaryIdLabel(locale);
-    final invoiceSecondaryIdLabel = _invoiceSecondaryIdLabel(locale);
     final nameCtrl = TextEditingController(
       text: settingsBox.get('companyName', defaultValue: '') as String,
     );
@@ -594,13 +829,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
               const SizedBox(height: 8),
               TextField(
                 controller: nipCtrl,
-                decoration: InputDecoration(labelText: invoicePrimaryIdLabel),
+                decoration: InputDecoration(
+                  labelText: l10n.invoicePrimaryIdLabel,
+                ),
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 8),
               TextField(
                 controller: regonCtrl,
-                decoration: InputDecoration(labelText: invoiceSecondaryIdLabel),
+                decoration: InputDecoration(
+                  labelText: l10n.invoiceSecondaryIdLabel,
+                ),
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 8),
@@ -750,52 +989,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  String _invoicePrimaryIdLabel(String locale) {
-    switch (locale) {
-      case 'pl':
-        return 'NIP';
-      case 'de':
-        return 'USt-IdNr.';
-      case 'it':
-        return 'Partita IVA';
-      case 'es':
-        return 'NIF/CIF';
-      case 'pt':
-        return 'NIF';
-      case 'tr':
-        return 'Vergi No';
-      case 'zh':
-        return '税号';
-      case 'ru':
-        return 'ИНН';
-      default:
-        return 'Tax ID';
-    }
-  }
-
-  String _invoiceSecondaryIdLabel(String locale) {
-    switch (locale) {
-      case 'pl':
-        return 'REGON';
-      case 'de':
-        return 'Handelsregisternr.';
-      case 'it':
-        return 'Codice fiscale';
-      case 'es':
-        return 'Registro mercantil';
-      case 'pt':
-        return 'Registo comercial';
-      case 'tr':
-        return 'Şirket sicil no';
-      case 'zh':
-        return '工商注册号';
-      case 'ru':
-        return 'ОГРН';
-      default:
-        return 'Business ID';
-    }
-  }
-
   Future<void> _logout(BuildContext context, Box settingsBox) async {
     final l10n = AppLocalizations.of(context)!;
     final confirmed = await ConfirmDialog.show(
@@ -915,7 +1108,6 @@ class _WorkingHoursDialog extends StatefulWidget {
 class _WorkingHoursDialogState extends State<_WorkingHoursDialog> {
   // Display order: Mon(1)…Sat(6), Sun(0)
   static const _dayOrder = [1, 2, 3, 4, 5, 6, 0];
-  static const _dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
   late Map<int, bool> _enabled;
   late Map<int, TimeOfDay> _start;
@@ -952,16 +1144,32 @@ class _WorkingHoursDialogState extends State<_WorkingHoursDialog> {
     _breakEnd = {};
 
     const defaultStart = {
-      1: '09:00', 2: '09:00', 3: '09:00',
-      4: '09:00', 5: '09:00', 6: '10:00', 0: '09:00',
+      1: '09:00',
+      2: '09:00',
+      3: '09:00',
+      4: '09:00',
+      5: '09:00',
+      6: '10:00',
+      0: '09:00',
     };
     const defaultEnd = {
-      1: '18:00', 2: '18:00', 3: '18:00',
-      4: '18:00', 5: '18:00', 6: '15:00', 0: '18:00',
+      1: '18:00',
+      2: '18:00',
+      3: '18:00',
+      4: '18:00',
+      5: '18:00',
+      6: '15:00',
+      0: '18:00',
     };
     // By default Mon-Fri enabled, Sat enabled, Sun closed
     const defaultEnabled = {
-      1: true, 2: true, 3: true, 4: true, 5: true, 6: true, 0: false,
+      1: true,
+      2: true,
+      3: true,
+      4: true,
+      5: true,
+      6: true,
+      0: false,
     };
 
     for (final day in _dayOrder) {
@@ -999,14 +1207,19 @@ class _WorkingHoursDialogState extends State<_WorkingHoursDialog> {
 
   TimeOfDay _parseTime(String s) {
     final parts = s.split(':');
-    return TimeOfDay(
-      hour: int.parse(parts[0]),
-      minute: int.parse(parts[1]),
-    );
+    return TimeOfDay(hour: int.parse(parts[0]), minute: int.parse(parts[1]));
   }
 
   String _fmtTime(TimeOfDay t) =>
       '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+
+  String _weekdayLabel(int day) {
+    final locale = Localizations.localeOf(context).toString();
+    final mondayAnchor = DateTime.utc(2024, 1, 1);
+    final offset = day == 0 ? 6 : day - 1;
+    final date = mondayAnchor.add(Duration(days: offset));
+    return DateFormat.E(locale).format(date);
+  }
 
   Map<String, dynamic> _buildSchedule() {
     final days = <String, dynamic>{};
@@ -1045,10 +1258,7 @@ class _WorkingHoursDialogState extends State<_WorkingHoursDialog> {
 
   Future<void> _pickTime(int day, bool isStart) async {
     final initial = isStart ? _start[day]! : _end[day]!;
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: initial,
-    );
+    final picked = await showTimePicker(context: context, initialTime: initial);
     if (picked != null && mounted) {
       setState(() {
         if (isStart) {
@@ -1062,10 +1272,7 @@ class _WorkingHoursDialogState extends State<_WorkingHoursDialog> {
 
   Future<void> _pickBreakTime(int day, bool isStart) async {
     final initial = isStart ? _breakStart[day]! : _breakEnd[day]!;
-    final picked = await showTimePicker(
-      context: context,
-      initialTime: initial,
-    );
+    final picked = await showTimePicker(context: context, initialTime: initial);
     if (picked != null && mounted) {
       setState(() {
         if (isStart) {
@@ -1079,8 +1286,11 @@ class _WorkingHoursDialogState extends State<_WorkingHoursDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final minutesShort = l10n.durationMinutesShort;
+
     return AlertDialog(
-      title: const Text('Working Hours'),
+      title: Text(l10n.settingsWorkingHoursTitle),
       contentPadding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       content: SizedBox(
         width: double.maxFinite,
@@ -1093,14 +1303,26 @@ class _WorkingHoursDialogState extends State<_WorkingHoursDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Slot', style: TextStyle(fontSize: 12)),
+                      Text(
+                        l10n.settingsWorkingHoursSlotLabel,
+                        style: const TextStyle(fontSize: 12),
+                      ),
                       DropdownButton<int>(
                         value: _slotMinutes,
                         isExpanded: true,
-                        items: const [
-                          DropdownMenuItem(value: 30, child: Text('30 min')),
-                          DropdownMenuItem(value: 60, child: Text('60 min')),
-                          DropdownMenuItem(value: 90, child: Text('90 min')),
+                        items: [
+                          DropdownMenuItem(
+                            value: 30,
+                            child: Text('30 $minutesShort'),
+                          ),
+                          DropdownMenuItem(
+                            value: 60,
+                            child: Text('60 $minutesShort'),
+                          ),
+                          DropdownMenuItem(
+                            value: 90,
+                            child: Text('90 $minutesShort'),
+                          ),
                         ],
                         onChanged: (v) => setState(() => _slotMinutes = v!),
                       ),
@@ -1112,16 +1334,25 @@ class _WorkingHoursDialogState extends State<_WorkingHoursDialog> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Min notice', style: TextStyle(fontSize: 12)),
+                      Text(
+                        l10n.settingsWorkingHoursMinNoticeLabel,
+                        style: const TextStyle(fontSize: 12),
+                      ),
                       DropdownButton<int>(
                         value: _minNoticeMinutes,
                         isExpanded: true,
-                        items: const [
-                          DropdownMenuItem(value: 60, child: Text('1 hour')),
-                          DropdownMenuItem(value: 120, child: Text('2 hours')),
+                        items: [
+                          DropdownMenuItem(
+                            value: 60,
+                            child: Text(l10n.settingsWorkingHoursNotice1Hour),
+                          ),
+                          DropdownMenuItem(
+                            value: 120,
+                            child: Text(l10n.settingsWorkingHoursNotice2Hours),
+                          ),
                           DropdownMenuItem(
                             value: 1440,
-                            child: Text('24 hours'),
+                            child: Text(l10n.settingsWorkingHoursNotice24Hours),
                           ),
                         ],
                         onChanged: (v) =>
@@ -1138,7 +1369,7 @@ class _WorkingHoursDialogState extends State<_WorkingHoursDialog> {
                 shrinkWrap: true,
                 itemCount: _dayOrder.length,
                 itemBuilder: (_, i) =>
-                    _buildDayRow(_dayOrder[i], _dayNames[i]),
+                    _buildDayRow(_dayOrder[i], _weekdayLabel(_dayOrder[i])),
               ),
             ),
           ],
@@ -1147,7 +1378,7 @@ class _WorkingHoursDialogState extends State<_WorkingHoursDialog> {
       actions: [
         TextButton(
           onPressed: _saving ? null : () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(l10n.cancel),
         ),
         FilledButton(
           onPressed: _saving ? null : _save,
@@ -1157,13 +1388,14 @@ class _WorkingHoursDialogState extends State<_WorkingHoursDialog> {
                   height: 16,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Save'),
+              : Text(l10n.save),
         ),
       ],
     );
   }
 
   Widget _buildDayRow(int day, String name) {
+    final l10n = AppLocalizations.of(context)!;
     final enabled = _enabled[day] ?? false;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1204,7 +1436,10 @@ class _WorkingHoursDialogState extends State<_WorkingHoursDialog> {
                   ),
                 ),
                 const SizedBox(width: 6),
-                const Text('Break', style: TextStyle(fontSize: 12)),
+                Text(
+                  l10n.settingsWorkingHoursBreakLabel,
+                  style: const TextStyle(fontSize: 12),
+                ),
                 if (_hasBreak[day] == true) ...[
                   const SizedBox(width: 8),
                   TextButton(

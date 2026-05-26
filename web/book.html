@@ -6,10 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Detailing Pro Booking</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css" />
     <style>
         :root {
             --bg: radial-gradient(circle at 20% 0%, #1f2a44 0%, #0f1424 45%, #090d18 100%);
-            --card: rgba(14, 20, 36, 0.85);
+            --card: rgba(22, 32, 60, 0.97);
             --border: rgba(255, 255, 255, 0.14);
             --text: #eef3ff;
             --muted: #9eaac8;
@@ -27,19 +28,23 @@
             font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
             color: var(--text);
             background: var(--bg);
-            display: grid;
-            place-items: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             padding: 18px;
+            box-sizing: border-box;
         }
 
         .card {
             width: min(680px, 100%);
+            max-width: 100%;
             background: var(--card);
             border: 1px solid var(--border);
             border-radius: 20px;
             padding: 22px;
-            backdrop-filter: blur(8px);
             box-shadow: 0 30px 90px rgba(0, 0, 0, 0.45);
+            box-sizing: border-box;
         }
 
         h1 {
@@ -127,32 +132,93 @@
             border-radius: 12px;
             padding: 10px;
             background: rgba(255, 255, 255, 0.02);
+            overflow: hidden;
         }
 
         .flatpickr-calendar.inline {
             box-shadow: none;
             border: none;
-            width: 100%;
             background: transparent;
+            width: 100%;
+            max-width: 330px;
+            margin: 0 auto;
         }
 
-        .flatpickr-day {
-            color: var(--text);
+        .flatpickr-months {
+            padding-bottom: 4px;
         }
 
         .flatpickr-months .flatpickr-month,
+        .flatpickr-current-month,
         .flatpickr-current-month .flatpickr-monthDropdown-months,
-        .flatpickr-weekday {
+        .flatpickr-current-month input.cur-year {
+            background: transparent !important;
+            color: var(--text) !important;
+            fill: var(--text) !important;
+            font-weight: 600;
+        }
+
+        .flatpickr-current-month .flatpickr-monthDropdown-months option {
+            background: #1a2340;
             color: var(--text);
+        }
+
+        .flatpickr-months .flatpickr-prev-month,
+        .flatpickr-months .flatpickr-next-month {
+            fill: var(--text) !important;
+            color: var(--text) !important;
+        }
+
+        .flatpickr-months .flatpickr-prev-month svg,
+        .flatpickr-months .flatpickr-next-month svg {
+            fill: var(--text) !important;
+        }
+
+        .flatpickr-months .flatpickr-prev-month:hover svg,
+        .flatpickr-months .flatpickr-next-month:hover svg {
+            fill: var(--accent) !important;
+        }
+
+        .flatpickr-weekdays,
+        .flatpickr-weekdaycontainer {
+            background: transparent !important;
+        }
+
+        .flatpickr-weekday {
+            color: var(--muted) !important;
+            background: transparent !important;
+        }
+
+        .flatpickr-day {
+            color: var(--text) !important;
+            border-radius: 8px !important;
+            font-weight: 600;
+            border-color: transparent;
+        }
+
+        .flatpickr-day:hover:not(.disabled):not(.prevMonthDay):not(.nextMonthDay) {
+            background: rgba(255, 167, 38, 0.18) !important;
+            border-color: transparent !important;
+        }
+
+        .flatpickr-day.disabled,
+        .flatpickr-day.flatpickr-disabled {
+            color: rgba(158, 170, 200, 0.2) !important;
+            cursor: default;
+        }
+
+        .flatpickr-day.prevMonthDay,
+        .flatpickr-day.nextMonthDay {
+            color: rgba(158, 170, 200, 0.18) !important;
         }
 
         .flatpickr-day.selected,
         .flatpickr-day.startRange,
         .flatpickr-day.endRange,
         .flatpickr-day.selected:hover {
-            background: var(--accent);
-            border-color: var(--accent);
-            color: #1f1605;
+            background: var(--accent) !important;
+            border-color: var(--accent) !important;
+            color: #1f1605 !important;
         }
 
         .slots-grid {
@@ -189,9 +255,64 @@
             margin-top: 6px;
         }
 
+        .consent-label {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            cursor: pointer;
+            font-size: 0.88rem;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        .consent-label input[type="checkbox"] {
+            width: auto;
+            margin-top: 3px;
+            flex-shrink: 0;
+            accent-color: var(--accent);
+            cursor: pointer;
+            padding: 0;
+            border: none;
+            background: none;
+        }
+
+        .consent-label a {
+            color: var(--accent);
+            text-decoration: underline;
+        }
+
+        /* date + time always full width */
+        .span-full {
+            grid-column: 1 / -1;
+        }
+
         @media (max-width: 640px) {
             .grid {
                 grid-template-columns: 1fr;
+            }
+
+            .card {
+                padding: 16px;
+            }
+
+            h1 {
+                font-size: 1.35rem;
+            }
+
+            input,
+            select,
+            textarea,
+            button {
+                font-size: 16px;
+            }
+
+            .calendar-wrap {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .flatpickr-calendar.inline {
+                min-width: 300px;
             }
         }
     </style>
@@ -231,14 +352,14 @@
                 <input id="car" name="car" placeholder="BMW X5 / ABC123" required />
             </div>
 
-            <div>
+            <div class="span-full">
                 <label for="date" id="dateLabel">Preferred date</label>
                 <div class="calendar-wrap">
-                    <input id="date" name="date" type="text" readonly required />
+                    <input id="date" name="date" type="text" readonly required style="display:none" />
                 </div>
             </div>
 
-            <div>
+            <div class="span-full">
                 <label id="timeLabel">Preferred time</label>
                 <div id="timeSlots" class="slots-grid"></div>
                 <div id="timeHint" class="hint"></div>
@@ -251,6 +372,13 @@
             </div>
 
             <div class="full">
+                <label class="consent-label">
+                    <input id="consentCheck" type="checkbox" required />
+                    <span id="consentText"></span>
+                </label>
+            </div>
+
+            <div class="full">
                 <button id="submitBtn" type="submit">Send request</button>
             </div>
         </form>
@@ -259,13 +387,20 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ru.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/uk.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pl.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/de.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/it.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/pt.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/tr.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/zh.js"></script>
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';
         import {
             getFirestore,
             collection,
-            addDoc,
-            serverTimestamp,
             getDocs,
             query,
             orderBy,
@@ -299,6 +434,7 @@
                 success: '✅ Request sent! We will contact you soon.',
                 loading: 'Sending… please wait.',
                 invalid: 'Booking link is invalid. Missing master ID.',
+                consent: 'I agree to the processing of my personal data in accordance with the <a href="https://detailing-pro.web.app/terms.html" target="_blank" rel="noopener">Privacy Policy</a>.',
             },
             pl: {
                 title: 'Umów wizytę na detailing',
@@ -315,6 +451,7 @@
                 success: '✅ Zgłoszenie wysłane! Skontaktujemy się wkrótce.',
                 loading: 'Wysyłanie… prosimy czekać.',
                 invalid: 'Link jest niepoprawny. Brak ID specjalisty.',
+                consent: 'Wyrażam zgodę na przetwarzanie moich danych osobowych zgodnie z <a href="https://detailing-pro.web.app/terms.html" target="_blank" rel="noopener">Polityką Prywatności</a>.',
             },
             de: {
                 title: 'Detailing-Termin buchen',
@@ -331,6 +468,7 @@
                 success: '✅ Anfrage gesendet! Wir melden uns bald.',
                 loading: 'Wird gesendet…',
                 invalid: 'Ungültiger Buchungslink.',
+                consent: 'Ich stimme der Verarbeitung meiner personenbezogenen Daten gemäß der <a href="https://detailing-pro.web.app/terms.html" target="_blank" rel="noopener">Datenschutzerklärung</a> zu.',
             },
             it: {
                 title: 'Prenota detailing',
@@ -347,6 +485,7 @@
                 success: '✅ Richiesta inviata! Ti contatteremo presto.',
                 loading: 'Invio in corso…',
                 invalid: 'Link non valido.',
+                consent: 'Acconsento al trattamento dei miei dati personali secondo l\'<a href="https://detailing-pro.web.app/terms.html" target="_blank" rel="noopener">Informativa sulla Privacy</a>.',
             },
             es: {
                 title: 'Reserva tu detailing',
@@ -363,6 +502,7 @@
                 success: '✅ Solicitud enviada! Te contactaremos pronto.',
                 loading: 'Enviando…',
                 invalid: 'Enlace inválido.',
+                consent: 'Acepto el tratamiento de mis datos personales conforme a la <a href="https://detailing-pro.web.app/terms.html" target="_blank" rel="noopener">Política de Privacidad</a>.',
             },
             pt: {
                 title: 'Agendar detailing',
@@ -379,6 +519,7 @@
                 success: '✅ Pedido enviado! Entraremos em contato.',
                 loading: 'Enviando…',
                 invalid: 'Link inválido.',
+                consent: 'Concordo com o tratamento dos meus dados pessoais conforme a <a href="https://detailing-pro.web.app/terms.html" target="_blank" rel="noopener">Política de Privacidade</a>.',
             },
             uk: {
                 title: 'Записатись на детейлінг',
@@ -395,6 +536,7 @@
                 success: '✅ Заявку надіслано! Ми зв\'яжемось з вами.',
                 loading: 'Надсилання…',
                 invalid: 'Недійсне посилання.',
+                consent: 'Я погоджуюсь з обробкою моїх персональних даних відповідно до <a href="https://detailing-pro.web.app/terms.html" target="_blank" rel="noopener">Політики конфіденційності</a>.',
             },
             ru: {
                 title: 'Записаться на детейлинг',
@@ -411,6 +553,7 @@
                 success: '✅ Заявка отправлена! Мы скоро свяжемся с вами.',
                 loading: 'Отправка… пожалуйста, подождите.',
                 invalid: 'Некорректная ссылка.',
+                consent: 'Я согласен(а) на обработку моих персональных данных согласно <a href="https://detailing-pro.web.app/terms.html" target="_blank" rel="noopener">Политике конфиденциальности</a>.',
             },
             tr: {
                 title: 'Detailing randevusu al',
@@ -427,6 +570,7 @@
                 success: '✅ Talebiniz gönderildi!',
                 loading: 'Gönderiliyor…',
                 invalid: 'Geçersiz bağlantı.',
+                consent: 'Kişisel verilerimin <a href="https://detailing-pro.web.app/terms.html" target="_blank" rel="noopener">Gizlilik Politikası</a> kapsamında işlenmesini kabul ediyorum.',
             },
         };
 
@@ -448,6 +592,8 @@
         document.getElementById('timeLabel').textContent = t.timeLabel;
         document.getElementById('noteLabel').textContent = t.noteLabel;
         document.getElementById('submitBtn').textContent = t.send;
+        document.getElementById('consentText').innerHTML = t.consent ||
+            'I agree to the processing of my personal data in accordance with the <a href="https://detailing-pro.web.app/terms.html" target="_blank" rel="noopener">Privacy Policy</a>.';
 
         if (masterName) {
             const masterBadge = document.getElementById('masterBadge');
@@ -532,6 +678,7 @@
         loadServices();
 
         const AVAILABILITY_URL = 'https://europe-west3-detailing-pro.cloudfunctions.net/getBookingAvailability';
+        const CREATE_BOOKING_REQUEST_URL = 'https://europe-west3-detailing-pro.cloudfunctions.net/createBookingRequest';
         const DEFAULT_SERVICE_MINUTES = Number(params.get('serviceMinutes')) > 0
             ? Number(params.get('serviceMinutes'))
             : 120;
@@ -542,6 +689,33 @@
         let slotsByDate = {};
         let enabledDates = [];
         let calendar = null;
+
+        function calendarLocaleFor(langCode) {
+            const l10n = window.flatpickr && window.flatpickr.l10ns
+                ? window.flatpickr.l10ns
+                : {};
+
+            const byLang = {
+                ru: l10n.ru,
+                uk: l10n.uk,
+                pl: l10n.pl,
+                de: l10n.de,
+                es: l10n.es,
+                it: l10n.it,
+                pt: l10n.pt,
+                tr: l10n.tr,
+                zh: l10n.zh,
+                en: l10n.default,
+            };
+
+            const base = byLang[langCode] || l10n.default || {};
+            // For European locales show week from Monday to avoid visual "shift".
+            const mondayFirst = langCode !== 'en';
+            return {
+                ...base,
+                firstDayOfWeek: mondayFirst ? 1 : 0,
+            };
+        }
 
         function monthKey(date) {
             const y = date.getUTCFullYear();
@@ -617,8 +791,7 @@
 
             const response = await fetch(url.toString());
             if (!response.ok) {
-                const text = await response.text();
-                throw new Error(text || `Availability error (${response.status})`);
+                throw new Error(tr('availabilityError', 'Unable to load available slots. Please try again later.'));
             }
 
             const data = await response.json();
@@ -648,6 +821,7 @@
                 dateFormat: 'Y-m-d',
                 disableMobile: true,
                 enable: [],
+                locale: calendarLocaleFor(lang),
                 onMonthChange: async (_, __, inst) => {
                     const month = monthKey(new Date(Date.UTC(inst.currentYear, inst.currentMonth, 1)));
                     if (month === currentMonth) return;
@@ -670,7 +844,7 @@
                 },
                 onChange: (selectedDates) => {
                     selectedDate = selectedDates.length
-                        ? selectedDates[0].toISOString().slice(0, 10)
+                        ? window.flatpickr.formatDate(selectedDates[0], 'Y-m-d')
                         : '';
                     dateInput.value = selectedDate;
                     renderTimeSlots();
@@ -722,15 +896,31 @@
                 car: document.getElementById('car').value.trim(),
                 preferredDate: selectedDate,
                 preferredTime: selectedTime,
-                note: document.getElementById('note').value.trim(),
+                note: document.getElementById('note').value.trim() || null,
                 locale: lang,
-                status: 'pending',
-                createdAt: serverTimestamp(),
                 source: 'web-booking',
             };
 
             try {
-                await addDoc(collection(db, 'booking_requests'), payload);
+                const bookingResponse = await fetch(CREATE_BOOKING_REQUEST_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
+
+                let bookingResult = null;
+                try {
+                    bookingResult = await bookingResponse.json();
+                } catch (_) {
+                    bookingResult = null;
+                }
+
+                if (!bookingResponse.ok) {
+                    const backendError = bookingResult && typeof bookingResult.error === 'string'
+                        ? bookingResult.error
+                        : `request-failed-${bookingResponse.status}`;
+                    throw new Error(backendError);
+                }
 
                 // Send confirmation e-mail via EmailJS (non-critical).
                 if (EMAIL_ENABLED && clientEmail) {

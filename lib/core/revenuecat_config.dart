@@ -35,11 +35,16 @@ class RevenueCatConfig {
       return false;
     }
     if (defaultTargetPlatform == TargetPlatform.android) {
-      return androidApiKey.isNotEmpty;
+      return _isValidPublicSdkKey(androidApiKey);
     }
     if (defaultTargetPlatform == TargetPlatform.iOS) {
-      return iosApiKey.isNotEmpty;
+      return _isValidPublicSdkKey(iosApiKey);
     }
     return false;
+  }
+
+  static bool _isValidPublicSdkKey(String key) {
+    return (key.startsWith('appl_') && key.length > 'appl_'.length) ||
+        (key.startsWith('goog_') && key.length > 'goog_'.length);
   }
 }

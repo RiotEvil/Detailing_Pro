@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/l10n/app_localizations.dart';
+import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'constants.dart';
@@ -9,7 +10,7 @@ import '../screens/pricing_screen.dart';
 class AccessGuard {
   AccessGuard._();
 
-  static const int freeClientsLimit = 100;
+  static const int freeClientsLimit = 20;
   static const int freeActiveOrdersPerMonthLimit = 10;
 
   static BusinessMode? currentBusinessMode() {
@@ -87,6 +88,18 @@ class AccessGuard {
 
   static bool enforcesFreePlanLimits() {
     return !hasProAccess();
+  }
+
+  /// Counts client records with a non-empty stable [id] (matches server quota).
+  static int countClients(Box clientsBox) {
+    var count = 0;
+    for (final raw in clientsBox.values) {
+      if (raw is! Map) continue;
+      final id = raw['id']?.toString();
+      if (id == null || id.isEmpty) continue;
+      count++;
+    }
+    return count;
   }
 
   static bool canCreateClient({

@@ -873,7 +873,7 @@ class AppLocalizationsTr extends AppLocalizations {
   String get authEnterPassword => 'Şifre girin';
 
   @override
-  String get authPasswordMin => 'En az 6 karakter';
+  String get authPasswordMin => 'En az 8 karakter';
 
   @override
   String get authFirebaseGuestOnly =>
@@ -1297,6 +1297,27 @@ class AppLocalizationsTr extends AppLocalizations {
   String get settingsBookingLinkOpen => 'Aç';
 
   @override
+  String get settingsWorkingHoursTitle => 'Çalışma saatleri';
+
+  @override
+  String get settingsWorkingHoursSlotLabel => 'Aralık';
+
+  @override
+  String get settingsWorkingHoursMinNoticeLabel => 'Min. bildirim';
+
+  @override
+  String get settingsWorkingHoursBreakLabel => 'Mola';
+
+  @override
+  String get settingsWorkingHoursNotice1Hour => '1 saat';
+
+  @override
+  String get settingsWorkingHoursNotice2Hours => '2 saat';
+
+  @override
+  String get settingsWorkingHoursNotice24Hours => '24 saat';
+
+  @override
   String get bookingRequestsTitle => 'Online rezervasyonlar';
 
   @override
@@ -1349,8 +1370,136 @@ class AppLocalizationsTr extends AppLocalizations {
   String get bookingRequestStatusDeclined => 'Reddedildi';
 
   @override
+  String get bookingRequestsFilterAll => 'Tümü';
+
+  @override
+  String get bookingRequestsEmptyNew => 'Yeni talep yok';
+
+  @override
+  String get bookingRequestsAcceptedFeedback =>
+      'Talep kabul edildi — sipariş otomatik olarak oluşturulacak';
+
+  @override
+  String get bookingRequestsDeclinedFeedback => 'Talep reddedildi';
+
+  @override
+  String get bookingRequestsDeclineConfirmContent =>
+      'Bu rezervasyon talebini reddet?';
+
+  @override
   String get enterServiceName => 'Hizmet adı gereklidir';
 
   @override
   String get invalidPrice => 'Geçerli fiyat girin (0 veya daha fazla)';
+
+  @override
+  String get invoiceTitle => 'FATURA';
+
+  @override
+  String get invoiceNumberPrefix => 'FT';
+
+  @override
+  String get invoiceSeller => 'SATICI';
+
+  @override
+  String get invoiceBuyer => 'ALICI';
+
+  @override
+  String get invoiceIssueDateLabel => 'Düzenleme tarihi';
+
+  @override
+  String get invoiceServiceDateLabel => 'Hizmet tarihi';
+
+  @override
+  String get invoiceDescriptionLabel => 'Açıklama';
+
+  @override
+  String get invoiceQtyLabel => 'Adet';
+
+  @override
+  String get invoiceNetPriceLabel => 'Net fiyat';
+
+  @override
+  String get invoiceVatPctLabel => 'KDV %';
+
+  @override
+  String get invoiceVatAmountLabel => 'KDV tutarı';
+
+  @override
+  String get invoiceGrossPriceLabel => 'Brüt fiyat';
+
+  @override
+  String get invoiceNetTotalLabel => 'Net toplam:';
+
+  @override
+  String invoiceVatLineLabel(Object rate) {
+    return 'KDV $rate:';
+  }
+
+  @override
+  String get invoiceTotalDueLabel => 'ÖDENECEK:';
+
+  @override
+  String get invoiceFillCompanyLabel => 'Şirket bilgilerini doldurun';
+
+  @override
+  String get invoiceIssuedByLabel => 'Tarafından düzenlendi';
+
+  @override
+  String get invoicePrimaryIdLabel => 'Vergi No';
+
+  @override
+  String get invoiceSecondaryIdLabel => 'Şirket sicil no';
+
+  @override
+  String settingsSeatUsage(Object total, Object used) {
+    return '$used / $total kişi';
+  }
+
+  @override
+  String get syncOfflineWarning =>
+      'İnternet bağlantısı yok. Veriler güncel olmayabilir.';
+
+  @override
+  String get forceUpdateTitle => 'Güncelleme gerekli';
+
+  @override
+  String get forceUpdateMessage =>
+      'Uygulamanın yeni bir sürümü var. Devam etmek için Detailing Pro\'yu güncelleyin.';
+
+  @override
+  String get forceUpdateButton => 'Güncelle';
+
+  @override
+  String get storageStartupTitle => 'Yerel depolama kullanılamıyor';
+
+  @override
+  String get storageStartupBody =>
+      'Detailing Pro şifreli veritabanını açamadı. Bu cihazdaki veriler korunuyor veya bozulmuş olabilir.';
+
+  @override
+  String get storageStartupHint =>
+      'Uygulamayı tamamen kapatıp yeniden açın. Sorun devam ederse uygulamayı yeniden yükleyin (aynı hesapla giriş yaparsanız bulut verileri kalır).';
+
+  @override
+  String get storageStartupCloseApp => 'Uygulamayı kapat';
+
+  @override
+  String get settingsSyncStatusTitle => 'Bulut senkronizasyonu';
+
+  @override
+  String settingsSyncPendingMessage(int count) {
+    return 'Senkronize edilmeyi bekleyen $count değişiklik';
+  }
+
+  @override
+  String settingsSyncFailedMessage(int count) {
+    return '$count değişiklik buluta senkronize edilemedi';
+  }
+
+  @override
+  String get settingsSyncRetryButton => 'Senkronizasyonu tekrar dene';
+
+  @override
+  String get settingsSyncDiscardButton => 'Başarısız değişiklikleri sil';
 }

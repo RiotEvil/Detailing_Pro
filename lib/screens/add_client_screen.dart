@@ -7,6 +7,7 @@ import 'package:flutter_application_1/l10n/app_localizations.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import '../core/access_guard.dart';
+import '../core/analytics_service.dart';
 import '../core/app_data_service.dart';
 import '../core/cloud_file_storage.dart';
 import '../core/constants.dart';
@@ -31,6 +32,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
   // Контроллеры
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
+  late TextEditingController _emailController;
   late TextEditingController _notesController;
   late TextEditingController _tagsController;
   late TextEditingController _carController;
@@ -62,6 +64,9 @@ class _AddClientScreenState extends State<AddClientScreen> {
     _phoneController = TextEditingController(
       text: widget.clientToEdit?.phone ?? '',
     );
+    _emailController = TextEditingController(
+      text: widget.clientToEdit?.email ?? '',
+    );
     _notesController = TextEditingController(
       text: widget.clientToEdit?.notes ?? '',
     );
@@ -87,6 +92,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
   void dispose() {
     _nameController.dispose();
     _phoneController.dispose();
+    _emailController.dispose();
     _notesController.dispose();
     _tagsController.dispose();
     _carController.dispose();
@@ -191,7 +197,14 @@ class _AddClientScreenState extends State<AddClientScreen> {
         photoPath.startsWith('http://') || photoPath.startsWith('https://');
     final imageWidget = (kIsWeb || isRemote)
         ? Image.network(photoPath, fit: BoxFit.cover)
-        : Image.file(File(photoPath), fit: BoxFit.cover);
+        : Image.file(
+            File(photoPath),
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => const ColoredBox(
+              color: Color(0xFF2A2A2A),
+              child: Icon(Icons.broken_image_outlined, color: Colors.white54),
+            ),
+          );
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
@@ -257,6 +270,25 @@ class _AddClientScreenState extends State<AddClientScreen> {
                             );
                             if (!RegExp(r'^\+?\d{7,15}$').hasMatch(cleaned)) {
                               return l10n.enterValidPhone;
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Поле Email
+                        _buildCustomTextField(
+                          controller: _emailController,
+                          label: l10n.emailLabel,
+                          hint: 'client@example.com',
+                          icon: Icons.email_outlined,
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (v) {
+                            if (v == null || v.trim().isEmpty) return null;
+                            if (!RegExp(
+                              r'^[\w.+-]+@[\w-]+\.[\w.]+$',
+                            ).hasMatch(v.trim())) {
+                              return l10n.authInvalidEmailFormat;
                             }
                             return null;
                           },
@@ -479,7 +511,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
       final cBox = Hive.box(HiveBoxes.clients);
 
       if (!AccessGuard.canCreateClient(
-        existingClientsCount: cBox.length,
+        existingClientsCount: AccessGuard.countClients(cBox),
         isEditing: widget.clientToEdit != null,
       )) {
         await AccessGuard.showUpgradePrompt(
@@ -501,6 +533,9 @@ class _AddClientScreenState extends State<AddClientScreen> {
         name: _nameController.text.trim(),
         cars: _cars,
         phone: _phoneController.text.trim(),
+        email: _emailController.text.trim().isEmpty
+            ? null
+            : _emailController.text.trim().toLowerCase(),
         notes: _notesController.text.trim().isEmpty
             ? null
             : _notesController.text.trim(),
@@ -533,6 +568,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
 
       // Fire-and-forget sync to Firestore
       unawaited(AppDataService.syncClientToCloud(client.toMap()));
+      unawaited(AnalyticsService.logClientCreated());
 
       if (mounted) Navigator.pop(context);
     } catch (e) {

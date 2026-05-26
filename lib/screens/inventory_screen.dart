@@ -266,6 +266,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
               channelDescription: l10n.inventoryNotificationsChannelDescription,
               importance: Importance.max,
               priority: Priority.high,
+              icon: 'ic_launcher_foreground',
             ),
           ),
         );

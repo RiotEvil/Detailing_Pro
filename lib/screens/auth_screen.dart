@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+﻿import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -76,7 +76,7 @@ class _AuthScreenState extends State<AuthScreen>
       return l10n.authEnterPassword;
     }
 
-    if (password.length < 6) {
+    if (password.length < 8) {
       return l10n.authPasswordMin;
     }
 

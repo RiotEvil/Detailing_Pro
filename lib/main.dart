@@ -16,19 +16,27 @@ import 'core/constants.dart';
 import 'core/cloud_profile_sync.dart';
 import 'core/force_update_service.dart';
 import 'core/hive_setup.dart';
+import 'core/network_sync_listener.dart';
 import 'core/notification_center.dart';
 import 'core/online_booking_service.dart';
+import 'core/onboarding_prefs.dart';
 import 'core/order_reminder_service.dart';
+import 'core/analytics_service.dart';
 import 'core/revenuecat_service.dart';
 import 'core/theme.dart';
+import 'core/write_queue.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_application_1/screens/main_navigation_screen.dart';
 import 'package:flutter_application_1/screens/auth_screen.dart';
 import 'package:flutter_application_1/screens/business_mode_screen.dart';
+import 'package:flutter_application_1/screens/onboarding/first_run_onboarding_screen.dart';
+import 'package:flutter_application_1/widgets/storage_startup_error_app.dart';
 
 /// FCM background message handler — must be a top-level function.
 @pragma('vm:entry-point')
 Future<void> _fcmBackgroundHandler(RemoteMessage message) async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   debugPrint('[FCM] Background message: ${message.notification?.title}');
 }
 
@@ -41,6 +49,9 @@ void main() async {
     debugPrint = (String? message, {int? wrapWidth}) {};
   }
 
+  Object? storageStartupFailure;
+  StackTrace? storageStartupStack;
+
   try {
     // 2. Инициализация Hive
     await Hive.initFlutter();
@@ -48,12 +59,23 @@ void main() async {
     // 3. Открываем все боксы и выполняем стартовый сидинг
     await setupHiveBoxes();
 
-    // 4. Настройка времени и уведомлений
+    // 4. Форматирование дат (независимо от уведомлений)
     await initializeDateFormatting();
+
+    await NetworkSyncListener.start();
+    WriteQueue.pendingCountNotifier.value = WriteQueue.pendingCount;
+    WriteQueue.failedCountNotifier.value = WriteQueue.failedCount;
+  } catch (e, stack) {
+    storageStartupFailure = e;
+    storageStartupStack = stack;
+    debugPrint('APP STARTUP ERROR: $e');
+  }
+
+  // Notifications are non-critical — failure must not block app startup.
+  try {
     await _setupNotifications();
   } catch (e) {
-    // Если здесь выскочит ошибка, мы увидим её в консоли
-    debugPrint('APP STARTUP ERROR: $e');
+    debugPrint('Notification setup failed (non-fatal): $e');
   }
 
   // Firebase optional at local dev stage.
@@ -70,6 +92,14 @@ void main() async {
       FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
       return true;
     };
+    if (storageStartupFailure != null) {
+      await FirebaseCrashlytics.instance.recordError(
+        storageStartupFailure,
+        storageStartupStack,
+        fatal: true,
+        reason: 'hive_startup_failed',
+      );
+    }
     if (kIsWeb) {
       await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
     }
@@ -90,6 +120,7 @@ void main() async {
             channelDescription: 'Cloud push notifications',
             importance: Importance.max,
             priority: Priority.high,
+            icon: 'ic_launcher_foreground',
           ),
         ),
       );
@@ -98,13 +129,22 @@ void main() async {
     debugPrint('Firebase is not initialized: $e');
   }
 
+  if (storageStartupFailure != null) {
+    runApp(
+      StorageStartupErrorApp(
+        message: storageStartupFailure.toString(),
+      ),
+    );
+    return;
+  }
+
   runApp(const DetailingProApp());
 }
 
 /// Настройка уведомлений, чтобы не загромождать main
 Future<void> _setupNotifications() async {
   const AndroidInitializationSettings initializationSettingsAndroid =
-      AndroidInitializationSettings('@mipmap/ic_launcher');
+      AndroidInitializationSettings('ic_launcher_foreground');
   const InitializationSettings initializationSettings = InitializationSettings(
     android: initializationSettingsAndroid,
   );
@@ -157,6 +197,7 @@ class _DetailingProAppState extends State<DetailingProApp> {
           supportedLocales: AppLocalizations.supportedLocales,
           debugShowCheckedModeBanner: false,
           theme: AppTheme.darkTheme,
+          navigatorObservers: AnalyticsService.navigatorObservers,
           home: const AuthGate(),
         );
       },
@@ -171,28 +212,85 @@ class AuthGate extends StatefulWidget {
   State<AuthGate> createState() => _AuthGateState();
 }
 
-class _AuthGateState extends State<AuthGate> {
+class _AuthGateState extends State<AuthGate> with WidgetsBindingObserver {
   late final Box _settingsBox;
   StreamSubscription<User?>? _authSubscription;
   StreamSubscription<Map<String, String>>? _accessProfileSubscription;
   StreamSubscription<String>? _fcmTokenRefreshSub;
+  int _lastFailedWriteCount = 0;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _settingsBox = Hive.box(HiveBoxes.settings);
+    OnboardingPrefs.ensureDefaults(_settingsBox);
     _hydrateAccessProfileFromCloud();
     _bindAuthAndAccessWatchers();
     _requestFcmPermission();
     _checkForUpdate();
+    AppDataService.hasSyncError.addListener(_onSyncErrorChanged);
+    WriteQueue.failedCountNotifier.addListener(_onFailedWritesChanged);
+    _lastFailedWriteCount = WriteQueue.failedCount;
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    AppDataService.hasSyncError.removeListener(_onSyncErrorChanged);
+    WriteQueue.failedCountNotifier.removeListener(_onFailedWritesChanged);
     _authSubscription?.cancel();
     _accessProfileSubscription?.cancel();
     _fcmTokenRefreshSub?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      unawaited(WriteQueue.flush());
+      _hydrateAccessProfileFromCloud();
+    }
+  }
+
+  void _onFailedWritesChanged() {
+    if (!mounted) return;
+    final failed = WriteQueue.failedCount;
+    if (failed <= _lastFailedWriteCount) {
+      _lastFailedWriteCount = failed;
+      return;
+    }
+    _lastFailedWriteCount = failed;
+    final l10n = AppLocalizations.of(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          l10n?.settingsSyncFailedMessage(failed) ??
+              '$failed changes could not sync to the cloud.',
+        ),
+        duration: const Duration(seconds: 6),
+        backgroundColor: Colors.red.shade800,
+      ),
+    );
+  }
+
+  void _onSyncErrorChanged() {
+    if (!mounted) return;
+    if (AppDataService.hasSyncError.value) {
+      final l10n = AppLocalizations.of(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            l10n?.syncOfflineWarning ??
+                'No internet connection. Data may be outdated.',
+          ),
+          duration: const Duration(seconds: 5),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).clearSnackBars();
+    }
   }
 
   void _bindAuthAndAccessWatchers() {
@@ -207,6 +305,7 @@ class _AuthGateState extends State<AuthGate> {
       _accessProfileSubscription = null;
 
       if (user == null) {
+        unawaited(AnalyticsService.logLogout());
         await _clearLocalAccessProfile(clearAuthUid: true);
         unawaited(
           AppDataService.stopCloudSync().catchError(
@@ -225,6 +324,13 @@ class _AuthGateState extends State<AuthGate> {
         );
         return;
       }
+      unawaited(
+        AnalyticsService.logLogin(
+          method: user.providerData.isNotEmpty
+              ? user.providerData.first.providerId
+              : 'unknown',
+        ),
+      );
 
       final previousUid = _settingsBox.get('authUid')?.toString();
       if (previousUid != user.uid) {
@@ -254,10 +360,8 @@ class _AuthGateState extends State<AuthGate> {
 
       _accessProfileSubscription = CloudProfileSync.watchAccessProfile().listen(
         (profile) async {
-          if (profile.isEmpty) {
-            return;
-          }
-
+          if (!mounted) return;
+          if (profile.isEmpty) return;
           await _applyAccessProfile(profile);
         },
       );
@@ -311,6 +415,7 @@ class _AuthGateState extends State<AuthGate> {
 
     if (remotePlan != null && remotePlan.isNotEmpty) {
       await _settingsBox.put('appPlan', remotePlan);
+      unawaited(AnalyticsService.setPlan(remotePlan));
     }
 
     if (remotePlanStatus != null && remotePlanStatus.isNotEmpty) {
@@ -349,6 +454,7 @@ class _AuthGateState extends State<AuthGate> {
   Future<void> _checkForUpdate() async {
     final result = await ForceUpdateService.check();
     if (!result.required) return;
+    if ((result.storeUrl ?? '').trim().isEmpty) return;
     if (!mounted) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
@@ -387,18 +493,53 @@ class _AuthGateState extends State<AuthGate> {
     await _hydrateAccessProfileFromCloud();
     await _startCloudSyncIfReady();
     await OnlineBookingService.start();
-    await RevenueCatService.configureAndLogin(
-      FirebaseAuth.instance.currentUser?.uid,
-    );
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      await RevenueCatService.configureAndLogin(uid);
+    }
   }
 
   Future<void> _handleBusinessModeSelected(BusinessMode mode) async {
+    final previousMode = _settingsBox.get('businessMode')?.toString();
+    final previousRole = _settingsBox.get('appRole')?.toString();
+    final previousOrgId = _settingsBox.get('orgId')?.toString();
+
     await _settingsBox.put('businessMode', mode.name);
     final role = mode == BusinessMode.team
         ? AppRole.director
         : AppRole.masterOwner;
     await _settingsBox.put('appRole', role.name);
-    await CloudProfileSync.syncBusinessMode(mode);
+
+    try {
+      await CloudProfileSync.syncBusinessMode(mode);
+    } catch (e) {
+      if (previousMode == null || previousMode.isEmpty) {
+        await _settingsBox.delete('businessMode');
+      } else {
+        await _settingsBox.put('businessMode', previousMode);
+      }
+
+      if (previousRole == null || previousRole.isEmpty) {
+        await _settingsBox.delete('appRole');
+      } else {
+        await _settingsBox.put('appRole', previousRole);
+      }
+
+      if (previousOrgId == null || previousOrgId.isEmpty) {
+        await _settingsBox.delete('orgId');
+      } else {
+        await _settingsBox.put('orgId', previousOrgId);
+      }
+
+      if (!mounted) return;
+      final l10n = AppLocalizations.of(context);
+      final message = l10n?.errorMessage(e.toString()) ?? e.toString();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
+      return;
+    }
+
     await CloudProfileSync.ensurePlanDefaults();
     if (Firebase.apps.isNotEmpty) {
       final user = FirebaseAuth.instance.currentUser;
@@ -407,6 +548,10 @@ class _AuthGateState extends State<AuthGate> {
       }
     }
     await _startCloudSyncIfReady();
+  }
+
+  Future<void> _finishOnboarding(bool skipped) async {
+    await OnboardingPrefs.markPreAuthCompleted(_settingsBox, skipped: skipped);
   }
 
   Widget _buildAnimatedRoot(Widget child, String key) {
@@ -431,6 +576,8 @@ class _AuthGateState extends State<AuthGate> {
           'appRole',
           'appPlan',
           'planStatus',
+          OnboardingPrefs.keyPreAuthCompleted,
+          OnboardingPrefs.keyGlobalCompletedVersion,
         ],
       ),
       builder: (context, Box box, _) {
@@ -448,6 +595,17 @@ class _AuthGateState extends State<AuthGate> {
             ? FirebaseAuth.instance.currentUser != null
             : false;
         final hasValidSession = authMode == 'firebase' && firebaseSessionActive;
+
+        final shouldShowPreAuthOnboarding = OnboardingPrefs.shouldShowPreAuth(
+          box,
+        );
+
+        if (shouldShowPreAuthOnboarding) {
+          return _buildAnimatedRoot(
+            FirstRunOnboardingScreen(onFinish: _finishOnboarding),
+            'onboarding_pre_auth',
+          );
+        }
 
         if (hasValidSession && businessMode != null) {
           return _buildAnimatedRoot(
@@ -479,27 +637,26 @@ class _ForceUpdateDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final hasStoreUrl = storeUrl != null && storeUrl!.isNotEmpty;
     return PopScope(
-      canPop: false,
+      canPop: !hasStoreUrl,
       child: AlertDialog(
-        title: const Text('Update required'),
-        content: const Text(
-          'A new version of the app is available. '
-          'Please update to continue using Detailing Pro.',
-        ),
+        title: Text(l10n.forceUpdateTitle),
+        content: Text(l10n.forceUpdateMessage),
         actions: [
-          if (storeUrl != null && storeUrl!.isNotEmpty)
+          if (hasStoreUrl)
             FilledButton(
               onPressed: () => launchUrl(
                 Uri.parse(storeUrl!),
                 mode: LaunchMode.externalApplication,
               ),
-              child: const Text('Update'),
+              child: Text(l10n.forceUpdateButton),
             )
           else
-            FilledButton(
-              onPressed: () {},
-              child: const Text('Update'),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(l10n.settingsClose),
             ),
         ],
       ),

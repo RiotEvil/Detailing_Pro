@@ -861,7 +861,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get authEnterPassword => '请输入密码';
 
   @override
-  String get authPasswordMin => '至少 6 个字符';
+  String get authPasswordMin => '至少 8 个字符';
 
   @override
   String get authFirebaseGuestOnly => 'Firebase 未配置。可使用游客模式。';
@@ -1264,6 +1264,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsBookingLinkOpen => '打开';
 
   @override
+  String get settingsWorkingHoursTitle => '工作时间';
+
+  @override
+  String get settingsWorkingHoursSlotLabel => '时间间隔';
+
+  @override
+  String get settingsWorkingHoursMinNoticeLabel => '最短提前时间';
+
+  @override
+  String get settingsWorkingHoursBreakLabel => '休息';
+
+  @override
+  String get settingsWorkingHoursNotice1Hour => '1小时';
+
+  @override
+  String get settingsWorkingHoursNotice2Hours => '2小时';
+
+  @override
+  String get settingsWorkingHoursNotice24Hours => '24小时';
+
+  @override
   String get bookingRequestsTitle => '在线预约请求';
 
   @override
@@ -1314,8 +1335,131 @@ class AppLocalizationsZh extends AppLocalizations {
   String get bookingRequestStatusDeclined => '已拒绝';
 
   @override
+  String get bookingRequestsFilterAll => '全部';
+
+  @override
+  String get bookingRequestsEmptyNew => '暂无新预约请求';
+
+  @override
+  String get bookingRequestsAcceptedFeedback => '请求已接受 — 订单将自动创建';
+
+  @override
+  String get bookingRequestsDeclinedFeedback => '请求已拒绝';
+
+  @override
+  String get bookingRequestsDeclineConfirmContent => '拒绝此预约请求？';
+
+  @override
   String get enterServiceName => '请输入服务名称';
 
   @override
   String get invalidPrice => '请输入有效价格（0或以上）';
+
+  @override
+  String get invoiceTitle => '发票';
+
+  @override
+  String get invoiceNumberPrefix => 'INV';
+
+  @override
+  String get invoiceSeller => '销售方';
+
+  @override
+  String get invoiceBuyer => '买方';
+
+  @override
+  String get invoiceIssueDateLabel => '开票日期';
+
+  @override
+  String get invoiceServiceDateLabel => '服务日期';
+
+  @override
+  String get invoiceDescriptionLabel => '项目描述';
+
+  @override
+  String get invoiceQtyLabel => '数量';
+
+  @override
+  String get invoiceNetPriceLabel => '净价';
+
+  @override
+  String get invoiceVatPctLabel => '税率%';
+
+  @override
+  String get invoiceVatAmountLabel => '税额';
+
+  @override
+  String get invoiceGrossPriceLabel => '含税价';
+
+  @override
+  String get invoiceNetTotalLabel => '净额合计:';
+
+  @override
+  String invoiceVatLineLabel(Object rate) {
+    return '税额 $rate:';
+  }
+
+  @override
+  String get invoiceTotalDueLabel => '应付总额:';
+
+  @override
+  String get invoiceFillCompanyLabel => '请填写公司信息';
+
+  @override
+  String get invoiceIssuedByLabel => '开票方';
+
+  @override
+  String get invoicePrimaryIdLabel => '税号';
+
+  @override
+  String get invoiceSecondaryIdLabel => '工商注册号';
+
+  @override
+  String settingsSeatUsage(Object total, Object used) {
+    return '$used / $total 个成员';
+  }
+
+  @override
+  String get syncOfflineWarning => '无网络连接，数据可能已过期。';
+
+  @override
+  String get forceUpdateTitle => '需要更新';
+
+  @override
+  String get forceUpdateMessage => '有新版本可用。请更新 Detailing Pro 以继续使用。';
+
+  @override
+  String get forceUpdateButton => '更新';
+
+  @override
+  String get storageStartupTitle => '本地存储不可用';
+
+  @override
+  String get storageStartupBody => 'Detailing Pro 无法打开加密数据库。此设备上的数据可能受保护或已损坏。';
+
+  @override
+  String get storageStartupHint =>
+      '请完全关闭应用后重新打开。若问题仍存在，请重新安装应用（使用同一账号登录后云端数据仍会保留）。';
+
+  @override
+  String get storageStartupCloseApp => '关闭应用';
+
+  @override
+  String get settingsSyncStatusTitle => '云同步';
+
+  @override
+  String settingsSyncPendingMessage(int count) {
+    return '有 $count 项更改等待同步';
+  }
+
+  @override
+  String settingsSyncFailedMessage(int count) {
+    return '有 $count 项更改未能同步到云端';
+  }
+
+  @override
+  String get settingsSyncRetryButton => '重试同步';
+
+  @override
+  String get settingsSyncDiscardButton => '丢弃失败的更改';
 }

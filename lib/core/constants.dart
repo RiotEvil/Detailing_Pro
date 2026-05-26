@@ -55,9 +55,13 @@ enum OrderStatus {
   }
 
   static OrderStatus fromName(String? name) {
+    if (name == null || name.isEmpty) return OrderStatus.scheduled;
     return OrderStatus.values.firstWhere(
       (e) => e.name == name,
-      orElse: () => OrderStatus.scheduled,
+      orElse: () {
+        assert(false, 'Unknown OrderStatus "$name" — defaulting to scheduled');
+        return OrderStatus.scheduled;
+      },
     );
   }
 }
@@ -83,6 +87,7 @@ class HiveBoxes {
   static const String photos = 'photosBox';
   static const String finance = 'financeBox';
   static const String marketing = 'marketingBox';
+  static const String pendingWrites = 'pendingWritesBox';
 }
 
 enum BusinessMode {

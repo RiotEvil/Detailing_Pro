@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_application_1/models/model_utils.dart';
 
 @immutable
 class Service {
@@ -36,16 +37,15 @@ class Service {
   }
 
   factory Service.fromMap(Map<dynamic, dynamic> map) {
+    final name = map['name']?.toString() ?? '';
+    if (name.isEmpty) debugPrint('[Service] missing name field, id=${map['id']}');
     return Service(
       id: map['id']?.toString(),
-      name: map['name']?.toString() ?? '',
-      price: (map['price'] as num?)?.toDouble() ?? 0.0,
-      duration: (map['duration'] as num?)?.toInt() ?? 0,
-      // Безопасное приведение списка: извлекаем как List, затем конвертируем каждый элемент в String
-      chemistry:
-          (map['chemistry'] as List?)?.map((e) => e.toString()).toList() ??
-          const [],
-      chemAmount: (map['chemAmount'] as num?)?.toInt() ?? 0,
+      name: name,
+      price: parseDouble(map['price'], field: 'Service.price'),
+      duration: parseInt(map['duration'], field: 'Service.duration'),
+      chemistry: parseStringList(map['chemistry'], field: 'Service.chemistry'),
+      chemAmount: parseInt(map['chemAmount'], field: 'Service.chemAmount'),
       description: map['description']?.toString(),
       category: map['category']?.toString(),
     );

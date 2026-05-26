@@ -15,9 +15,21 @@ class RevenueCatService {
 
   static const String _functionsRegion = 'europe-west3';
   static bool _configured = false;
+  static bool _configuring = false;
 
   static Future<void> configureAndLogin(String? appUserId) async {
     if (!RevenueCatConfig.isEnabledForCurrentPlatform) {
+      assert(() {
+        if (!kIsWeb &&
+            (defaultTargetPlatform == TargetPlatform.android ||
+                defaultTargetPlatform == TargetPlatform.iOS)) {
+          debugPrint(
+            '[RevenueCat] DISABLED — API key is empty or invalid. '
+            'Run with: flutter run --dart-define-from-file=build_config.env',
+          );
+        }
+        return true;
+      }());
       return;
     }
 
@@ -27,13 +39,21 @@ class RevenueCatService {
     }
 
     try {
-      if (!_configured) {
-        if (kDebugMode) {
-          await Purchases.setLogLevel(LogLevel.debug);
+      if (!_configured && !_configuring) {
+        _configuring = true;
+        try {
+          if (kDebugMode) {
+            await Purchases.setLogLevel(LogLevel.debug);
+          }
+          final config = PurchasesConfiguration(apiKey)..appUserID = appUserId;
+          await Purchases.configure(config);
+          _configured = true;
+        } finally {
+          _configuring = false;
         }
-        final config = PurchasesConfiguration(apiKey)..appUserID = appUserId;
-        await Purchases.configure(config);
-        _configured = true;
+      } else if (_configuring) {
+        // Another call is already initialising — skip to avoid double configure.
+        return;
       } else if (appUserId != null && appUserId.isNotEmpty) {
         await Purchases.logIn(appUserId);
       }
@@ -146,6 +166,23 @@ class RevenueCatService {
     await box.put('planStatus', status.name);
     await box.put('billingProvider', 'revenuecat');
 
+    if (status == PlanStatus.trial) {
+      final entitlement = businessEntitlement ?? proEntitlement;
+      try {
+        final expStr = entitlement?.expirationDate?.toString();
+        if (expStr != null) {
+          final expDate = DateTime.tryParse(expStr);
+          if (expDate != null) {
+            await box.put('trialEndsAt', expDate.millisecondsSinceEpoch);
+          }
+        }
+      } catch (e) {
+        debugPrint('[RevenueCat] could not parse trialEndsAt: $e');
+      }
+    } else {
+      await box.delete('trialEndsAt');
+    }
+
     await _syncPlanWithBackend();
   }
 
@@ -173,15 +210,23 @@ class RevenueCatService {
       'https://$_functionsRegion-$projectId.cloudfunctions.net/syncPlanStatus',
     );
     final client = HttpClient();
+    client.connectionTimeout = const Duration(seconds: 10);
 
     try {
-      final request = await client.postUrl(uri);
+      final request = await client
+          .postUrl(uri)
+          .timeout(const Duration(seconds: 10));
       request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $idToken');
       request.headers.contentType = ContentType.json;
       request.add(utf8.encode('{}'));
 
-      final response = await request.close();
-      final body = await utf8.decoder.bind(response).join();
+      final response = await request
+          .close()
+          .timeout(const Duration(seconds: 10));
+      final body = await utf8.decoder
+          .bind(response)
+          .join()
+          .timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 429) {
         return;

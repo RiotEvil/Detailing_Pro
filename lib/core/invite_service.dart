@@ -1,6 +1,8 @@
-import 'dart:math';
+import 'dart:convert';
+import 'dart:io' show ContentType, HttpClient, HttpHeaders;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 /// Typed exception thrown by [InviteService] for user-facing error messages.
@@ -28,10 +30,99 @@ class InviteException implements Exception {
 class InviteService {
   InviteService._();
 
-  // Алфавит без похожих символов (0/O, 1/I/l) для удобства набора
-  static const _chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  static const String _functionsRegion = 'europe-west3';
 
   static bool get _firebaseReady => Firebase.apps.isNotEmpty;
+
+  static InviteException _mapInviteError(String code, {int? seatLimit}) {
+    switch (code) {
+      case 'seat-limit-reached':
+        final limit = seatLimit ?? 1;
+        return InviteException(
+          'Лимит мест в команде достигнут ($limit). Team seat limit reached ($limit).',
+        );
+      case 'invalid-code-format':
+      case 'invalid-invite-code':
+        return const InviteException('Invalid invite code');
+      case 'invite-already-used':
+        return const InviteException('This invite code has already been used');
+      case 'unauthorized':
+      case 'forbidden':
+      case 'forbidden-org':
+      case 'forbidden-director':
+      case 'forbidden-user':
+      case 'user-already-in-other-org':
+        return const InviteException(
+          'You do not have permission to perform this action',
+        );
+      default:
+        return const InviteException('Unable to process invite request');
+    }
+  }
+
+  static Future<Map<String, dynamic>> _postInviteEndpoint({
+    required String endpoint,
+    required Map<String, dynamic> payload,
+  }) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      throw const InviteException(
+        'You do not have permission to perform this action',
+      );
+    }
+
+    final projectId = Firebase.app().options.projectId;
+    if (projectId.isEmpty) {
+      throw const InviteException('Unable to process invite request');
+    }
+
+    final idToken = await user.getIdToken();
+    if (idToken == null || idToken.isEmpty) {
+      throw const InviteException(
+        'You do not have permission to perform this action',
+      );
+    }
+
+    final uri = Uri.parse(
+      'https://$_functionsRegion-$projectId.cloudfunctions.net/$endpoint',
+    );
+    final client = HttpClient()
+      ..connectionTimeout = const Duration(seconds: 15);
+
+    try {
+      final request = await client.postUrl(uri);
+      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $idToken');
+      request.headers.contentType = ContentType.json;
+      request.add(utf8.encode(jsonEncode(payload)));
+
+      final response = await request.close().timeout(
+        const Duration(seconds: 20),
+      );
+      final body = await utf8.decoder.bind(response).join();
+
+      Map<String, dynamic> json = <String, dynamic>{};
+      if (body.trim().isNotEmpty) {
+        final parsed = jsonDecode(body);
+        if (parsed is Map<String, dynamic>) {
+          json = parsed;
+        }
+      }
+
+      if (response.statusCode != 200) {
+        final code = json['error']?.toString() ?? 'internal';
+        final seatLimit = (json['seatLimit'] as num?)?.toInt();
+        throw _mapInviteError(code, seatLimit: seatLimit);
+      }
+
+      return json;
+    } on InviteException {
+      rethrow;
+    } catch (_) {
+      throw const InviteException('Unable to process invite request');
+    } finally {
+      client.close(force: true);
+    }
+  }
 
   /// Генерирует 6-значный инвайт-код и сохраняет его в Firestore.
   /// Возвращает сгенерированный код.
@@ -40,23 +131,22 @@ class InviteService {
     required String directorUid,
   }) async {
     if (!_firebaseReady) throw Exception('Firebase is not initialized');
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null || user.uid != directorUid) {
+      throw const InviteException(
+        'You do not have permission to perform this action',
+      );
+    }
 
-    final rng = Random.secure();
-    final code = List.generate(
-      6,
-      (_) => _chars[rng.nextInt(_chars.length)],
-    ).join();
+    final response = await _postInviteEndpoint(
+      endpoint: 'generateInviteCode',
+      payload: {'orgId': orgId, 'directorUid': directorUid},
+    );
 
-    await FirebaseFirestore.instance.collection('invites').doc(code).set({
-      'code': code,
-      'orgId': orgId,
-      'directorUid': directorUid,
-      'used': false,
-      'usedBy': null,
-      'createdAt': FieldValue.serverTimestamp(),
-      'usedAt': null,
-    });
-
+    final code = response['code']?.toString() ?? '';
+    if (code.isEmpty) {
+      throw const InviteException('Unable to process invite request');
+    }
     return code;
   }
 
@@ -74,42 +164,24 @@ class InviteService {
     if (normalizedCode.length != 6) {
       throw const InviteException('Invite code must be exactly 6 characters');
     }
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null || user.uid != userUid) {
+      throw const InviteException(
+        'You do not have permission to perform this action',
+      );
+    }
 
-    final firestore = FirebaseFirestore.instance;
+    final response = await _postInviteEndpoint(
+      endpoint: 'joinWithInviteCode',
+      payload: {'code': normalizedCode, 'userUid': userUid},
+    );
 
-    return firestore.runTransaction<String>((tx) async {
-      final inviteRef = firestore.collection('invites').doc(normalizedCode);
-      final inviteSnap = await tx.get(inviteRef);
+    final orgId = response['orgId']?.toString() ?? '';
+    if (orgId.isEmpty) {
+      throw const InviteException('Unable to process invite request');
+    }
 
-      if (!inviteSnap.exists) {
-        throw const InviteException('Invalid invite code');
-      }
-
-      final data = inviteSnap.data()!;
-      if (data['used'] == true) {
-        throw const InviteException('This invite code has already been used');
-      }
-
-      final orgId = data['orgId'] as String;
-
-      // Помечаем код как использованный
-      tx.update(inviteRef, {
-        'used': true,
-        'usedBy': userUid,
-        'usedAt': FieldValue.serverTimestamp(),
-      });
-
-      // Привязываем пользователя к организации с ролью мастера
-      final userRef = firestore.collection('users').doc(userUid);
-      tx.set(userRef, {
-        'orgId': orgId,
-        'role': 'master',
-        'businessMode': 'team',
-        'updatedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-
-      return orgId;
-    });
+    return orgId;
   }
 
   /// Возвращает список активных (неиспользованных) инвайтов для организации.

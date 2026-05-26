@@ -20,6 +20,7 @@ void main() {
     final dir = await Directory.systemTemp.createTemp('hive_access_guard_');
     Hive.init(dir.path);
     await Hive.openBox(HiveBoxes.settings);
+    await Hive.openBox(HiveBoxes.clients);
   });
 
   setUp(() {
@@ -30,18 +31,30 @@ void main() {
     await Hive.close();
   });
 
+  group('AccessGuard.countClients', () {
+    test('counts only records with a non-empty id', () {
+      final box = Hive.box(HiveBoxes.clients);
+      box.clear();
+      box.add({'name': 'no id'});
+      box.add({'id': '', 'name': 'empty id'});
+      box.add({'id': 'client_1', 'name': 'Alice'});
+
+      expect(AccessGuard.countClients(box), 1);
+    });
+  });
+
   // ────────────────────────────────────────────────────────
   // canCreateClient
   // ────────────────────────────────────────────────────────
   group('AccessGuard.canCreateClient', () {
     test('free plan: allows when below limit', () {
       _setPlan(AppPlan.free, PlanStatus.inactive);
-      expect(AccessGuard.canCreateClient(existingClientsCount: 99), isTrue);
+      expect(AccessGuard.canCreateClient(existingClientsCount: 19), isTrue);
     });
 
-    test('free plan: blocks at exact limit (100)', () {
+    test('free plan: blocks at exact limit (20)', () {
       _setPlan(AppPlan.free, PlanStatus.inactive);
-      expect(AccessGuard.canCreateClient(existingClientsCount: 100), isFalse);
+      expect(AccessGuard.canCreateClient(existingClientsCount: 20), isFalse);
     });
 
     test('free plan: blocks above limit', () {
@@ -80,11 +93,11 @@ void main() {
     test('pro + inactive status still enforces limits', () {
       // Plan is pro but subscription expired (inactive) — limits apply
       _setPlan(AppPlan.pro, PlanStatus.inactive);
-      expect(AccessGuard.canCreateClient(existingClientsCount: 100), isFalse);
+      expect(AccessGuard.canCreateClient(existingClientsCount: 20), isFalse);
     });
 
-    test('limit constant is 100', () {
-      expect(AccessGuard.freeClientsLimit, 100);
+    test('limit constant is 20', () {
+      expect(AccessGuard.freeClientsLimit, 20);
     });
   });
 

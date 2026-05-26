@@ -94,6 +94,7 @@ class OrderReminderService {
             channelDescription: l10n.ordersChannelDescription,
             importance: Importance.max,
             priority: Priority.high,
+            icon: 'ic_launcher_foreground',
           ),
         ),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,

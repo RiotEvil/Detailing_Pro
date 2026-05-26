@@ -1,6 +1,7 @@
 {
   "projects": {
-    "detailing-pro": "detailing-pro"
+    "detailing-pro": "detailing-pro",
+    "default": "detailing-pro"
   },
   "targets": {},
   "etags": {}

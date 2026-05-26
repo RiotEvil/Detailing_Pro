@@ -20,6 +20,7 @@ class SubscriptionTexts {
         return _pick(context, {
           'en': 'Free',
           'ru': 'Бесплатный',
+          'uk': 'Безкоштовний',
           'pl': 'Bezpłatny',
           'pt': 'Gratuito',
           'tr': 'Ucretsiz',
@@ -34,6 +35,7 @@ class SubscriptionTexts {
         return _pick(context, {
           'en': 'Business',
           'ru': 'Бизнес',
+          'uk': 'Бізнес',
           'pl': 'Business',
           'pt': 'Business',
           'tr': 'Business',
@@ -142,22 +144,15 @@ class SubscriptionTexts {
 
   static String legalDocumentsSubtitle(BuildContext context) {
     return _pick(context, {
-      'en': 'Draft privacy policy and terms prepared for store release.',
-      'ru':
-          'Черновики политики конфиденциальности и условий подготовлены для публикации в сторе.',
-      'pl':
-          'Szkice polityki prywatnosci i regulaminu przygotowane do publikacji w sklepie.',
-      'pt':
-          'Rascunhos de politica de privacidade e termos preparados para lancamento na loja.',
-      'tr':
-          'Gizlilik politikasi ve kosullar taslagi magaza yayinina hazirlandi.',
-      'zh': '隐私政策与条款草案已为商店发布准备就绪。',
-      'es':
-          'Borradores de politica de privacidad y terminos listos para lanzamiento en la tienda.',
-      'it':
-          'Bozze di privacy policy e termini pronte per la pubblicazione sullo store.',
-      'de':
-          'Entwurfe fur Datenschutzrichtlinie und Nutzungsbedingungen fur den Store-Release vorbereitet.',
+      'en': 'Privacy policy and terms of service.',
+      'ru': 'Политика конфиденциальности и условия использования.',
+      'pl': 'Polityka prywatności i warunki korzystania z usługi.',
+      'pt': 'Política de privacidade e termos de serviço.',
+      'tr': 'Gizlilik politikası ve kullanım koşulları.',
+      'zh': '隐私政策与服务条款。',
+      'es': 'Política de privacidad y condiciones de uso.',
+      'it': 'Informativa sulla privacy e termini di servizio.',
+      'de': 'Datenschutzrichtlinie und Nutzungsbedingungen.',
     });
   }
 
@@ -195,6 +190,21 @@ class SubscriptionTexts {
     return '$prefix: ${planName(context, plan)}';
   }
 
+  static String choosePlan(BuildContext context, String planName) {
+    return _pick(context, {
+      'en': 'Choose $planName',
+      'ru': 'Выбрать $planName',
+      'pl': 'Wybierz $planName',
+      'uk': 'Обрати $planName',
+      'pt': 'Escolher $planName',
+      'tr': '$planName Seç',
+      'zh': '选择 $planName',
+      'es': 'Elegir $planName',
+      'it': 'Scegli $planName',
+      'de': '$planName wählen',
+    });
+  }
+
   static String viewPlans(BuildContext context) {
     return _pick(context, {
       'en': 'View plans',
@@ -226,166 +236,166 @@ class SubscriptionTexts {
   static String teamWorkspaceBusinessMessage(BuildContext context) {
     return _pick(context, {
       'en':
-          'Team mode, roles and shared workspace are available on the Business plan.',
+          'See who\'s working, what\'s assigned and where the money is — without spreadsheets, group chats or guesswork.',
       'ru':
-          'Командный режим, роли и общее рабочее пространство доступны на тарифе Бизнес.',
+          'Смотрите кто работает, что назначено и где деньги — без таблиц, чатов и догадок.',
       'pl':
-          'Tryb zespolowy, role i wspolna przestrzen robocza sa dostepne w planie Business.',
+          'Widzisz kto pracuje, co jest przypisane i gdzie sa pieniadze — bez tabel, chatow i domyslow.',
       'pt':
-          'Modo de equipe, funcoes e espaco de trabalho compartilhado estao disponiveis no plano Business.',
+          'Veja quem esta trabalhando, o que foi atribuido e onde esta o dinheiro — sem planilhas, chats ou suposicoes.',
       'tr':
-          'Ekip modu, roller ve paylasilan calisma alani Business planinda mevcuttur.',
-      'zh': '团队模式、角色与共享工作区仅在商业版套餐中可用。',
+          'Kim calisiyor, ne atanmis ve para nerede — tablo, grup sohbeti veya tahmin olmadan goruntuleyin.',
+      'zh': '看清谁在工作、任务如何分配、钱在哪里——无需表格、群聊或猜测。',
       'es':
-          'El modo equipo, los roles y el espacio compartido estan disponibles en el plan Business.',
+          'Ve quien trabaja, que esta asignado y donde esta el dinero — sin hojas de calculo, chats ni suposiciones.',
       'it':
-          'Modalita team, ruoli e workspace condiviso sono disponibili nel piano Business.',
+          'Vedi chi lavora, cosa e assegnato e dove sono i soldi — senza fogli, chat di gruppo o supposizioni.',
       'de':
-          'Teammodus, Rollen und gemeinsamer Arbeitsbereich sind im Business-Tarif verfugbar.',
+          'Sieh, wer arbeitet, was zugewiesen ist und wo das Geld ist — ohne Tabellen, Gruppenchats oder Raterei.',
     });
   }
 
   static String crmProTitle(BuildContext context) {
     return _pick(context, {
-      'en': 'CRM campaigns require Pro',
-      'ru': 'CRM-кампании требуют Pro',
-      'pl': 'Kampanie CRM wymagaja Pro',
-      'pt': 'Campanhas CRM exigem Pro',
-      'tr': 'CRM kampanyalari Pro gerektirir',
-      'zh': 'CRM 活动需要 Pro',
-      'es': 'Las campanas CRM requieren Pro',
-      'it': 'Le campagne CRM richiedono Pro',
-      'de': 'CRM-Kampagnen erfordern Pro',
+      'en': 'Win back clients who\'ve gone quiet',
+      'ru': 'Верните клиентов, которые пропали',
+      'pl': 'Odzysk klientow, ktorzy zamilkli',
+      'pt': 'Recupere clientes que sumiram',
+      'tr': 'Sessizlesen musterilerinizi geri kazanin',
+      'zh': '唤回沉默的客户',
+      'es': 'Recupera clientes que han desaparecido',
+      'it': 'Recupera i clienti che si sono persi',
+      'de': 'Abgewanderte Kunden zuruckgewinnen',
     });
   }
 
   static String crmProMessage(BuildContext context) {
     return _pick(context, {
       'en':
-          'Upgrade to Pro to use client segments, bulk reminders and campaign history.',
+          'Clients with no visit in 45+ days are potential lost revenue. Pro lets you reach them in one tap.',
       'ru':
-          'Перейдите на Pro, чтобы использовать сегменты клиентов, массовые напоминания и историю кампаний.',
+          'Клиенты без визита 45+ дней — это потерянные деньги. Pro позволяет напомнить о себе в один клик.',
       'pl':
-          'Przejdz na Pro, aby korzystac z segmentow klientow, masowych przypomnien i historii kampanii.',
+          'Klienci bez wizyty przez 45+ dni to utracony dochod. Pro pozwala przypomniec im o sobie jednym dotknieciem.',
       'pt':
-          'Atualize para Pro para usar segmentos de clientes, lembretes em massa e historico de campanhas.',
+          'Clientes sem visita ha 45+ dias sao receita perdida. O Pro permite alcanca-los com um toque.',
       'tr':
-          'Musteri segmentlerini, toplu hatirlaticilari ve kampanya gecmisini kullanmak icin Pro\'ya gecin.',
-      'zh': '升级到 Pro 以使用客户分群、批量提醒和活动历史。',
+          '45+ gun ziyaret etmeyen musteriler potansiyel kaybedilen gelirdir. Pro, tek dokunusla onlara ulasmanizi saglar.',
+      'zh': '45天以上未到访的客户就是潜在的流失收入。Pro 让你一键触达他们。',
       'es':
-          'Actualiza a Pro para usar segmentos de clientes, recordatorios masivos e historial de campanas.',
+          'Los clientes sin visita en 45+ dias son ingresos perdidos. Pro te permite contactarlos con un toque.',
       'it':
-          'Passa a Pro per usare segmenti clienti, promemoria di massa e storico campagne.',
+          'I clienti senza visita da 45+ giorni sono ricavi persi. Pro ti permette di raggiungerli con un tap.',
       'de':
-          'Upgrade auf Pro, um Kundensegmente, Massen-Erinnerungen und Kampagnenverlauf zu nutzen.',
+          'Kunden ohne Besuch seit 45+ Tagen sind potenziell verlorener Umsatz. Pro lasst dich sie mit einem Tipp erreichen.',
     });
   }
 
   static String marketingProTitle(BuildContext context) {
     return _pick(context, {
-      'en': 'Marketing tools require Pro',
-      'ru': 'Маркетинговые инструменты требуют Pro',
-      'pl': 'Narzedia marketingowe wymagaja Pro',
-      'pt': 'Ferramentas de marketing exigem Pro',
-      'tr': 'Pazarlama araclari Pro gerektirir',
-      'zh': '营销工具需要 Pro',
-      'es': 'Las herramientas de marketing requieren Pro',
-      'it': 'Gli strumenti di marketing richiedono Pro',
-      'de': 'Marketing-Tools erfordern Pro',
+      'en': 'Grow without buying new traffic',
+      'ru': 'Рост без покупки нового трафика',
+      'pl': 'Rozwijaj sie bez kupowania nowego ruchu',
+      'pt': 'Cresca sem comprar novos clientes',
+      'tr': 'Yeni trafik satin almadan buyuyin',
+      'zh': '无需购买新流量也能增长',
+      'es': 'Crece sin comprar nuevo trafico',
+      'it': 'Cresci senza comprare nuovo traffico',
+      'de': 'Wachse ohne neuen Traffic zu kaufen',
     });
   }
 
   static String marketingProMessage(BuildContext context) {
     return _pick(context, {
       'en':
-          'Upgrade to Pro to access reactivation lists, marketing insights and CRM outreach tools.',
+          'Your existing clients are your cheapest source of new revenue. Pro gives you the tools to reach them at the right moment.',
       'ru':
-          'Перейдите на Pro, чтобы получить доступ к спискам реактивации, маркетинговой аналитике и CRM-инструментам.',
+          'Существующие клиенты — самый дешёвый источник новых заказов. Pro даёт инструменты, чтобы обращаться к ним в нужный момент.',
       'pl':
-          'Przejdz na Pro, aby uzyskac dostep do list reaktywacji, analityki marketingowej i narzedzi CRM.',
+          'Twoi obecni klienci sa najtanszym zrodlem nowych przychodow. Pro daje narzedzia, by dotrzec do nich we wlasciwym momencie.',
       'pt':
-          'Atualize para Pro para acessar listas de reativacao, insights de marketing e ferramentas de CRM.',
+          'Seus clientes existentes sao a fonte mais barata de nova receita. O Pro da ferramentas para alcanca-los no momento certo.',
       'tr':
-          'Yeniden etkinlestirme listelerine, pazarlama analizlerine ve CRM araclarina erismek icin Pro\'ya gecin.',
-      'zh': '升级到 Pro 以访问召回名单、营销洞察和 CRM 工具。',
+          'Mevcut musterileriniz en ucuz yeni gelir kaynaginizdir. Pro, dogru anda onlara ulasmak icin araclari saglar.',
+      'zh': '现有客户是你最便宜的新收入来源。Pro 提供工具，让你在合适的时机触达他们。',
       'es':
-          'Actualiza a Pro para acceder a listas de reactivacion, analitica de marketing y herramientas CRM.',
+          'Tus clientes actuales son tu fuente mas barata de nuevos ingresos. Pro te da las herramientas para contactarlos en el momento justo.',
       'it':
-          'Passa a Pro per accedere a liste di riattivazione, insight marketing e strumenti CRM.',
+          'I tuoi clienti esistenti sono la fonte piu economica di nuovi ricavi. Pro ti da gli strumenti per raggiungerli al momento giusto.',
       'de':
-          'Upgrade auf Pro fur Reaktivierungslisten, Marketing-Insights und CRM-Tools.',
+          'Deine bestehenden Kunden sind deine gunstigste Quelle fur neue Einnahmen. Pro gibt dir die Werkzeuge, sie im richtigen Moment anzusprechen.',
     });
   }
 
   static String bookingProTitle(BuildContext context) {
     return _pick(context, {
-      'en': 'Online booking requires Pro',
-      'ru': 'Онлайн-запись требует Pro',
-      'pl': 'Rezerwacje online wymagaja Pro',
-      'pt': 'Agendamento online exige Pro',
-      'tr': 'Cevrimici rezervasyon Pro gerektirir',
-      'zh': '在线预约需要 Pro',
-      'es': 'Las reservas online requieren Pro',
-      'it': 'Le prenotazioni online richiedono Pro',
-      'de': 'Online-Buchungen erfordern Pro',
+      'en': 'Get clients while you work',
+      'ru': 'Клиенты записываются сами, пока вы работаете',
+      'pl': 'Zdobywaj klientow podczas pracy',
+      'pt': 'Receba clientes enquanto trabalha',
+      'tr': 'Calisirken musteri kazanin',
+      'zh': '工作时也能收到客户预约',
+      'es': 'Consigue clientes mientras trabajas',
+      'it': 'Ricevi clienti mentre lavori',
+      'de': 'Kunden gewinnen wahrend du arbeitest',
     });
   }
 
   static String bookingProMessage(BuildContext context) {
     return _pick(context, {
       'en':
-          'Upgrade to Pro to receive booking requests and share your online booking link.',
+          'Share your booking link — clients pick a time, you get the order. No calls, no back-and-forth in chats.',
       'ru':
-          'Перейдите на Pro, чтобы получать заявки на запись и делиться ссылкой на онлайн-бронирование.',
+          'Поделитесь ссылкой — клиент выбирает время, заявка сразу попадает к вам. Без звонков и переписки.',
       'pl':
-          'Przejdz na Pro, aby otrzymywac prosby o rezerwacje i udostepniac link do rezerwacji online.',
+          'Udostepnij link — klient wybiera czas, zlecenie trafia do ciebie. Zero telefonow i pisania na czacie.',
       'pt':
-          'Atualize para Pro para receber pedidos de agendamento e compartilhar seu link de reservas online.',
+          'Compartilhe o link — o cliente escolhe o horario, o pedido chega direto a voce. Sem ligacoes nem chats.',
       'tr':
-          'Rezervasyon talepleri almak ve cevrimici rezervasyon baglantinizi paylasmak icin Pro\'ya gecin.',
-      'zh': '升级到 Pro 以接收预约请求并分享在线预约链接。',
+          'Baglantinizi paylasin — musteri zaman secer, siparis size gelir. Telefon ve mesajlasma yok.',
+      'zh': '分享预约链接——客户选好时间，订单直接到你手上。无需打电话，无需反复沟通。',
       'es':
-          'Actualiza a Pro para recibir solicitudes de reserva y compartir tu enlace de reservas online.',
+          'Comparte el enlace — el cliente elige horario, el pedido llega a ti. Sin llamadas ni chats interminables.',
       'it':
-          'Passa a Pro per ricevere richieste di prenotazione e condividere il link di booking online.',
+          'Condividi il link — il cliente sceglie l\'orario, l\'ordine arriva a te. Niente telefonate ne messaggi.',
       'de':
-          'Upgrade auf Pro, um Buchungsanfragen zu erhalten und deinen Online-Buchungslink zu teilen.',
+          'Link teilen — Kunde wahlt die Zeit, Auftrag kommt zu dir. Keine Anrufe, kein Hin-und-Her im Chat.',
     });
   }
 
   static String remindersProTitle(BuildContext context) {
     return _pick(context, {
-      'en': 'Automated reminders require Pro',
-      'ru': 'Автоматические напоминания требуют Pro',
-      'pl': 'Automatyczne przypomnienia wymagaja Pro',
-      'pt': 'Lembretes automaticos exigem Pro',
-      'tr': 'Otomatik hatirlaticilar Pro gerektirir',
-      'zh': '自动提醒需要 Pro',
-      'es': 'Los recordatorios automaticos requieren Pro',
-      'it': 'I promemoria automatici richiedono Pro',
-      'de': 'Automatische Erinnerungen erfordern Pro',
+      'en': 'Stop losing money to no-shows',
+      'ru': 'Перестаньте терять деньги на пустых окнах',
+      'pl': 'Przestan tracic pieniadze przez nieobecnych klientow',
+      'pt': 'Pare de perder dinheiro com ausencias',
+      'tr': 'Gelmeyen musterilere para kaybetmeyi birakin',
+      'zh': '不再因爽约损失收入',
+      'es': 'Deja de perder dinero por cancelaciones',
+      'it': 'Smetti di perdere soldi per le assenze',
+      'de': 'Hor auf, durch No-Shows Geld zu verlieren',
     });
   }
 
   static String remindersProMessage(BuildContext context) {
     return _pick(context, {
       'en':
-          'Upgrade to Pro to schedule automatic appointment reminders for upcoming orders.',
+          'One missed appointment costs more than a month of Pro. Automated reminders keep your calendar full.',
       'ru':
-          'Перейдите на Pro, чтобы планировать автоматические напоминания о предстоящих заказах.',
+          'Одна отмена стоит дороже месяца Pro. Автоматические напоминания держат ваш календарь заполненным.',
       'pl':
-          'Przejdz na Pro, aby planowac automatyczne przypomnienia o nadchodzacych zleceniach.',
+          'Jedna nieobecnosc kosztuje wiecej niz miesiac Pro. Automatyczne przypomnienia zapelniaja twoj kalendarz.',
       'pt':
-          'Atualize para Pro para agendar lembretes automaticos para pedidos futuros.',
+          'Uma ausencia custa mais que um mes de Pro. Lembretes automaticos mantem sua agenda sempre cheia.',
       'tr':
-          'Yaklasan siparisler icin otomatik randevu hatirlaticilari planlamak uzere Pro\'ya gecin.',
-      'zh': '升级到 Pro 以为即将到来的订单安排自动预约提醒。',
+          'Tek bir randevu kaybi, Pro\'nun aylik ucretinden fazlasina mal olur. Otomatik hatirlaticilar takviminizi dolu tutar.',
+      'zh': '一次爽约的损失超过一个月的 Pro 订阅费。自动提醒让你的日历始终满满当当。',
       'es':
-          'Actualiza a Pro para programar recordatorios automaticos para pedidos proximos.',
+          'Una cita perdida cuesta mas que un mes de Pro. Los recordatorios automaticos mantienen tu agenda llena.',
       'it':
-          'Passa a Pro per programmare promemoria automatici per gli ordini imminenti.',
+          'Un appuntamento mancato costa piu di un mese di Pro. I promemoria automatici tengono pieno il tuo calendario.',
       'de':
-          'Upgrade auf Pro, um automatische Terminerinnerungen fur kommende Auftrage zu planen.',
+          'Ein verpasster Termin kostet mehr als ein Monat Pro. Automatische Erinnerungen halten deinen Kalender voll.',
     });
   }
 
@@ -427,37 +437,37 @@ class SubscriptionTexts {
 
   static String freeOrderLimitTitle(BuildContext context) {
     return _pick(context, {
-      'en': 'Free plan order limit reached',
-      'ru': 'Достигнут лимит заказов на Free',
-      'pl': 'Osiagnieto limit zlecen w planie Free',
-      'pt': 'Limite de pedidos do plano Free atingido',
-      'tr': 'Free plani siparis limitine ulasildi',
-      'zh': '已达到免费套餐订单上限',
-      'es': 'Se alcanzo el limite de pedidos del plan Free',
-      'it': 'Raggiunto il limite ordini del piano Free',
-      'de': 'Auftragslimit im Free-Tarif erreicht',
+      'en': 'You\'ve outgrown the Free plan',
+      'ru': 'Вы выросли из бесплатного тарифа',
+      'pl': 'Wyrosles z planu Free',
+      'pt': 'Voce superou o plano Free',
+      'tr': 'Free planinin otesine gectiniz',
+      'zh': '你已超出免费套餐',
+      'es': 'Has superado el plan Free',
+      'it': 'Hai superato il piano Free',
+      'de': 'Du bist uber den Free-Tarif hinausgewachsen',
     });
   }
 
   static String freeOrderLimitMessage(BuildContext context, int limit) {
     return _pick(context, {
       'en':
-          'The Free plan supports up to $limit active orders per month. Upgrade to Pro for unlimited orders.',
+          '$limit orders per month is the Free limit — and you\'re already there. Upgrade to Pro and keep going without limits.',
       'ru':
-          'Тариф Free поддерживает до $limit активных заказов в месяц. Перейдите на Pro для неограниченных заказов.',
+          '$limit заказов в месяц — лимит Free, и вы уже у него. Перейдите на Pro и работайте без ограничений.',
       'pl':
-          'Plan Free obsluguje do $limit aktywnych zlecen miesiecznie. Przejdz na Pro dla nielimitowanych zlecen.',
+          '$limit zlecen miesiecznie to limit Free — i juz go osiagasz. Przejdz na Pro i pracuj bez ograniczen.',
       'pt':
-          'O plano Free suporta ate $limit pedidos ativos por mes. Atualize para Pro para pedidos ilimitados.',
+          '$limit pedidos por mes e o limite Free — e voce ja chegou la. Atualize para Pro e continue sem limites.',
       'tr':
-          'Free plan ayda en fazla $limit aktif siparis destekler. Sinirsiz siparis icin Pro\'ya gecin.',
-      'zh': '免费套餐每月最多支持 $limit 个活跃订单。升级到 Pro 可获得无限订单。',
+          'Aylik $limit siparis Free limitidir — ve siz zaten oraya ulastiniz. Pro\'ya gecin ve sinirsiz calisin.',
+      'zh': '每月 $limit 个订单是免费套餐上限——你已经到了。升级到 Pro，继续无限制工作。',
       'es':
-          'El plan Free admite hasta $limit pedidos activos por mes. Actualiza a Pro para pedidos ilimitados.',
+          '$limit pedidos al mes es el limite Free — y ya lo alcanzaste. Actualiza a Pro y sigue sin limites.',
       'it':
-          'Il piano Free supporta fino a $limit ordini attivi al mese. Passa a Pro per ordini illimitati.',
+          '$limit ordini al mese e il limite Free — e sei gia li. Passa a Pro e lavora senza limiti.',
       'de':
-          'Der Free-Tarif unterstutzt bis zu $limit aktive Auftrage pro Monat. Upgrade auf Pro fur unbegrenzte Auftrage.',
+          '$limit Auftrage pro Monat ist das Free-Limit — und du bist schon dort. Upgrade auf Pro und arbeite ohne Grenzen.',
     });
   }
 
@@ -535,73 +545,73 @@ class SubscriptionTexts {
 
   static String statsProTitle(BuildContext context) {
     return _pick(context, {
-      'en': 'Advanced analytics require Pro',
-      'ru': 'Расширенная аналитика требует Pro',
-      'pl': 'Zaawansowana analityka wymaga Pro',
-      'pt': 'Analises avancadas exigem Pro',
-      'tr': 'Gelismis analizler Pro gerektirir',
-      'zh': '高级分析需要 Pro',
-      'es': 'La analitica avanzada requiere Pro',
-      'it': 'Le analisi avanzate richiedono Pro',
-      'de': 'Erweiterte Analysen erfordern Pro',
+      'en': 'See who\'s bringing you money',
+      'ru': 'Узнайте, кто приносит вам деньги',
+      'pl': 'Zobacz kto przynosi ci pieniadze',
+      'pt': 'Veja quem esta trazendo dinheiro para voce',
+      'tr': 'Size para getireni gorün',
+      'zh': '看清谁在为你带来收入',
+      'es': 'Descubre quien te trae dinero',
+      'it': 'Scopri chi ti porta soldi',
+      'de': 'Sieh, wer dir Geld bringt',
     });
   }
 
   static String statsProSubtitle(BuildContext context) {
     return _pick(context, {
       'en':
-          'Unlock revenue trends, order history views and business performance insights with Pro or Business.',
+          'Which clients come back, which services pay the most, where your revenue is growing — all in Pro and Business.',
       'ru':
-          'Откройте тренды выручки, историю заказов и метрики эффективности бизнеса с Pro или Бизнес.',
+          'Какие клиенты возвращаются, какие услуги приносят больше всего, где растёт выручка — всё в Pro и Бизнес.',
       'pl':
-          'Odblokuj trendy przychodow, historie zlecen i analize efektywnosci z planem Pro lub Business.',
+          'Ktorzy klienci wracaja, ktore uslugi najbardziej sie oplacaja, gdzie rosna przychody — w Pro i Business.',
       'pt':
-          'Desbloqueie tendencias de receita, historico de pedidos e analise de desempenho com Pro ou Business.',
+          'Quais clientes voltam, quais servicos pagam mais, onde sua receita cresce — tudo no Pro e Business.',
       'tr':
-          'Pro veya Business ile gelir trendlerini, siparis gecmisini ve performans analizini acin.',
-      'zh': '使用 Pro 或商业版解锁营收趋势、订单历史和业务表现分析。',
+          'Hangi musteriler geri donuyor, hangi hizmetler en fazla kazandiriyor, geliriniz nerede artiyor — Pro ve Business\'ta.',
+      'zh': '哪些客户复访、哪些服务最赚钱、收入在哪里增长——Pro 和商业版中一目了然。',
       'es':
-          'Desbloquea tendencias de ingresos, historial de pedidos e indicadores de rendimiento con Pro o Business.',
+          'Que clientes vuelven, que servicios dejan mas, donde crece tu ingreso — todo en Pro y Business.',
       'it':
-          'Sblocca trend ricavi, storico ordini e analisi performance con Pro o Business.',
+          'Quali clienti ritornano, quali servizi rendono di piu, dove cresce il tuo fatturato — in Pro e Business.',
       'de':
-          'Schalte Umsatztrends, Auftragshistorie und Performance-Analysen mit Pro oder Business frei.',
+          'Welche Kunden kommen wieder, welche Leistungen bringen am meisten, wo wachst dein Umsatz — in Pro und Business.',
     });
   }
 
   static String statsUpgradeTitle(BuildContext context) {
     return _pick(context, {
-      'en': 'Upgrade for analytics',
-      'ru': 'Апгрейд для аналитики',
-      'pl': 'Ulepsz do analityki',
-      'pt': 'Upgrade para analises',
-      'tr': 'Analiz icin yukselt',
-      'zh': '升级以使用分析',
-      'es': 'Mejorar para analitica',
-      'it': 'Upgrade per analisi',
-      'de': 'Upgrade fur Analysen',
+      'en': 'Know your numbers',
+      'ru': 'Знайте свои цифры',
+      'pl': 'Znaj swoje liczby',
+      'pt': 'Conheca seus numeros',
+      'tr': 'Rakamlarinizi bilin',
+      'zh': '了解你的数字',
+      'es': 'Conoce tus numeros',
+      'it': 'Conosci i tuoi numeri',
+      'de': 'Kenne deine Zahlen',
     });
   }
 
   static String statsUpgradeMessage(BuildContext context) {
     return _pick(context, {
       'en':
-          'Detailed reporting and performance dashboards are included in Pro and Business plans.',
+          'Revenue trends, top clients and performance by service — all in Pro and Business.',
       'ru':
-          'Подробные отчеты и дашборды производительности входят в тарифы Pro и Бизнес.',
+          'Тренды выручки, топ-клиенты и эффективность по услугам — всё в Pro и Бизнес.',
       'pl':
-          'Szczegolowe raporty i pulpity wydajnosci sa dostepne w planach Pro i Business.',
+          'Trendy przychodow, najlepsi klienci i wydajnosc uslug — wszystko w Pro i Business.',
       'pt':
-          'Relatorios detalhados e dashboards de desempenho estao incluidos nos planos Pro e Business.',
+          'Tendencias de receita, melhores clientes e desempenho por servico — tudo no Pro e Business.',
       'tr':
-          'Ayrintili raporlama ve performans panolari Pro ve Business planlarina dahildir.',
-      'zh': '详细报表和性能看板包含在 Pro 与商业版套餐中。',
+          'Gelir trendleri, en iyi musteriler ve hizmet performansi — Pro ve Business\'ta.',
+      'zh': '收入趋势、顶级客户和按服务统计的业绩——全在 Pro 和商业版中。',
       'es':
-          'Los informes detallados y paneles de rendimiento estan incluidos en Pro y Business.',
+          'Tendencias de ingresos, mejores clientes y rendimiento por servicio — todo en Pro y Business.',
       'it':
-          'Report dettagliati e dashboard performance sono inclusi nei piani Pro e Business.',
+          'Trend ricavi, clienti top e performance per servizio — tutto in Pro e Business.',
       'de':
-          'Detaillierte Berichte und Performance-Dashboards sind in Pro- und Business-Tarifen enthalten.',
+          'Umsatztrends, Top-Kunden und Service-Performance — alles in Pro und Business.',
     });
   }
 
@@ -691,6 +701,8 @@ class SubscriptionTexts {
               'For solo specialists who want to try the app and keep basic operations in one place.',
           'ru':
               'Для мастеров-одиночек, которые хотят попробовать приложение и вести базовые процессы в одном месте.',
+          'uk':
+              'Для майстрів-одинаків, які хочуть спробувати застосунок і вести базові процеси в одному місці.',
           'pl':
               'Dla samodzielnych specjalistow, ktorzy chca przetestowac aplikacje i prowadzic podstawowe procesy w jednym miejscu.',
           'pt':
@@ -708,42 +720,46 @@ class SubscriptionTexts {
       case AppPlan.pro:
         return _pick(context, {
           'en':
-              'For independent professionals who need full workflows, reminders and reporting.',
+              'For professionals who want bookings without phone calls, zero missed appointments and clear revenue tracking.',
           'ru':
-              'Для независимых специалистов, которым нужны полные процессы, напоминания и отчетность.',
+              'Для мастеров, которым нужны записи без звонков, ноль пропущенных визитов и понятная выручка.',
+          'uk':
+              'Для майстрів, яким потрібні записи без дзвінків, нуль пропущених візитів і зрозумілий дохід.',
           'pl':
-              'Dla niezaleznych profesjonalistow, ktorzy potrzebuja pelnych procesow, przypomnien i raportowania.',
+              'Dla profesjonalistow, ktorzy chca rezerwacji bez telefonow, zera opuszczonych wizyt i przejrzystych przychodow.',
           'pt':
-              'Para profissionais independentes que precisam de fluxos completos, lembretes e relatorios.',
+              'Para profissionais que querem agendamentos sem telefonemas, zero ausencias e controle claro de receita.',
           'tr':
-              'Tam is akislarina, hatirlaticilara ve raporlamaya ihtiyac duyan bagimsiz profesyoneller icin.',
-          'zh': '适合需要完整流程、提醒和报表的独立专业人士。',
+              'Telefonsuz randevular, sifir kacirilan randevu ve net gelir takibi isteyen profesyoneller icin.',
+          'zh': '适合想要无需打电话即可预约、零爽约和清晰收入追踪的专业人士。',
           'es':
-              'Para profesionales independientes que necesitan flujos completos, recordatorios e informes.',
+              'Para profesionales que quieren reservas sin llamadas, cero citas perdidas y seguimiento claro de ingresos.',
           'it':
-              'Per professionisti indipendenti che necessitano di flussi completi, promemoria e report.',
+              'Per professionisti che vogliono prenotazioni senza telefonate, zero appuntamenti persi e ricavi chiari.',
           'de':
-              'Fur unabhangige Profis, die vollstandige Workflows, Erinnerungen und Reporting benotigen.',
+              'Fur Profis, die Buchungen ohne Anrufe, null verpasste Termine und klares Umsatz-Tracking wollen.',
         });
       case AppPlan.business:
         return _pick(context, {
           'en':
-              'For studios and teams that need shared access, roles and business control.',
+              'For studios where the owner needs to see everything: who\'s working, what\'s booked and where the money is.',
           'ru':
-              'Для студий и команд, которым нужны общий доступ, роли и управляемость бизнеса.',
+              'Для студий, где владелец должен видеть всё: кто работает, что забронировано и где деньги.',
+          'uk':
+              'Для студій, де власник має бачити все: хто працює, що заброньовано і де гроші.',
           'pl':
-              'Dla studiow i zespolow, ktore potrzebuja wspolnego dostepu, rol i kontroli biznesu.',
+              'Dla studiow, w ktorych wlasciciel musi widziec wszystko: kto pracuje, co jest zarezerwowane i gdzie sa pieniadze.',
           'pt':
-              'Para estudios e equipes que precisam de acesso compartilhado, funcoes e controle do negocio.',
+              'Para estudios onde o dono precisa ver tudo: quem esta trabalhando, o que foi agendado e onde esta o dinheiro.',
           'tr':
-              'Paylasimli erisim, roller ve isletme kontrolu gereken studyolar ve ekipler icin.',
-          'zh': '适合需要共享访问、角色与业务管控的门店和团队。',
+              'Sahibin her seyi gormesi gereken studyolar icin: kim calisiyor, ne rezerve edildi ve para nerede.',
+          'zh': '适合老板需要看清一切的门店：谁在工作、预约了什么、钱在哪里。',
           'es':
-              'Para estudios y equipos que necesitan acceso compartido, roles y control del negocio.',
+              'Para estudios donde el dueno necesita verlo todo: quien trabaja, que esta reservado y donde esta el dinero.',
           'it':
-              'Per studi e team che necessitano di accesso condiviso, ruoli e controllo del business.',
+              'Per studi dove il titolare deve vedere tutto: chi lavora, cosa e prenotato e dove sono i soldi.',
           'de':
-              'Fur Studios und Teams mit Bedarf an gemeinsamem Zugriff, Rollen und Business-Kontrolle.',
+              'Fur Studios, wo der Inhaber alles sehen muss: wer arbeitet, was gebucht ist und wo das Geld ist.',
         });
     }
   }
@@ -754,6 +770,7 @@ class SubscriptionTexts {
         return _pick(context, {
           'en': '€0 / month',
           'ru': '€0 / мес',
+          'uk': '€0 / міс',
           'pl': '€0 / mies.',
           'pt': '€0 / mes',
           'tr': '€0 / ay',
@@ -764,27 +781,29 @@ class SubscriptionTexts {
         });
       case AppPlan.pro:
         return _pick(context, {
-          'en': '€19 / month',
-          'ru': '€19 / мес',
-          'pl': '€19 / mies.',
-          'pt': '€19 / mes',
-          'tr': '€19 / ay',
-          'zh': '€19 / 月',
-          'es': '€19 / mes',
-          'it': '€19 / mese',
-          'de': '€19 / Monat',
+          'en': '€10 / month',
+          'ru': '€10 / мес',
+          'uk': '€10 / міс',
+          'pl': '€10 / mies.',
+          'pt': '€10 / mes',
+          'tr': '€10 / ay',
+          'zh': '€10 / 月',
+          'es': '€10 / mes',
+          'it': '€10 / mese',
+          'de': '€10 / Monat',
         });
       case AppPlan.business:
         return _pick(context, {
-          'en': '€59 / month',
-          'ru': '€59 / мес',
-          'pl': '€59 / mies.',
-          'pt': '€59 / mes',
-          'tr': '€59 / ay',
-          'zh': '€59 / 月',
-          'es': '€59 / mes',
-          'it': '€59 / mese',
-          'de': '€59 / Monat',
+          'en': '€39 / month',
+          'ru': '€39 / мес',
+          'uk': '€39 / міс',
+          'pl': '€39 / mies.',
+          'pt': '€39 / mes',
+          'tr': '€39 / ay',
+          'zh': '€39 / 月',
+          'es': '€39 / mes',
+          'it': '€39 / mese',
+          'de': '€39 / Monat',
         });
     }
   }
@@ -805,15 +824,15 @@ class SubscriptionTexts {
             'de': '1 Benutzer',
           }),
           _pick(context, {
-            'en': 'Up to 100 clients',
-            'ru': 'До 100 клиентов',
-            'pl': 'Do 100 klientow',
-            'pt': 'Ate 100 clientes',
-            'tr': '100 musteriye kadar',
-            'zh': '最多 100 位客户',
-            'es': 'Hasta 100 clientes',
-            'it': 'Fino a 100 clienti',
-            'de': 'Bis zu 100 Kunden',
+            'en': 'Up to 20 clients',
+            'ru': 'До 20 клиентов',
+            'pl': 'Do 20 klientow',
+            'pt': 'Ate 20 clientes',
+            'tr': '20 musteriye kadar',
+            'zh': '最多 20 位客户',
+            'es': 'Hasta 20 clientes',
+            'it': 'Fino a 20 clienti',
+            'de': 'Bis zu 20 Kunden',
           }),
           _pick(context, {
             'en': 'Up to 10 active orders per month',
@@ -838,30 +857,41 @@ class SubscriptionTexts {
             'de': 'Basis-Kalender und Kundenkarten',
           }),
           _pick(context, {
-            'en': 'In-app reminders only',
-            'ru': 'Только напоминания внутри приложения',
-            'pl': 'Tylko przypomnienia w aplikacji',
-            'pt': 'Apenas lembretes no app',
-            'tr': 'Yalnizca uygulama ici hatirlaticilar',
-            'zh': '仅应用内提醒',
-            'es': 'Solo recordatorios en la app',
-            'it': 'Solo promemoria in-app',
-            'de': 'Nur In-App-Erinnerungen',
+            'en': 'Manual reminders only',
+            'ru': 'Только ручные напоминания',
+            'pl': 'Tylko ręczne przypomnienia',
+            'pt': 'Apenas lembretes manuais',
+            'tr': 'Yalnızca manuel hatırlatıcılar',
+            'zh': '仅支持手动提醒',
+            'es': 'Solo recordatorios manuales',
+            'it': 'Solo promemoria manuali',
+            'de': 'Nur manuelle Erinnerungen',
           }),
           _pick(context, {
-            'en': 'Limited file attachments',
-            'ru': 'Ограниченные вложения файлов',
-            'pl': 'Ograniczone zalaczniki plikow',
-            'pt': 'Anexos de arquivos limitados',
-            'tr': 'Sinirli dosya ekleri',
-            'zh': '有限文件附件',
-            'es': 'Adjuntos limitados',
-            'it': 'Allegati file limitati',
-            'de': 'Begrenzte Dateianhange',
+            'en': 'No chat attachments',
+            'ru': 'Без вложений в чате',
+            'pl': 'Brak załączników na czacie',
+            'pt': 'Sem anexos no chat',
+            'tr': 'Sohbette dosya eki yok',
+            'zh': '聊天不支持附件',
+            'es': 'Sin adjuntos en el chat',
+            'it': 'Nessun allegato in chat',
+            'de': 'Keine Chat-Anhänge',
           }),
         ];
       case AppPlan.pro:
         return [
+          _pick(context, {
+            'en': 'Online booking link for clients',
+            'ru': 'Онлайн-ссылка для записи клиентов',
+            'pl': 'Link do rezerwacji online dla klientow',
+            'pt': 'Link de agendamento online para clientes',
+            'tr': 'Musteriler icin cevrimici rezervasyon baglantisi',
+            'zh': '客户在线预约链接',
+            'es': 'Enlace de reserva online para clientes',
+            'it': 'Link di prenotazione online per i clienti',
+            'de': 'Online-Buchungslink fur Kunden',
+          }),
           _pick(context, {
             'en': '1 user',
             'ru': '1 пользователь',
@@ -885,15 +915,15 @@ class SubscriptionTexts {
             'de': 'Unbegrenzte Kunden und Auftrage',
           }),
           _pick(context, {
-            'en': 'Full reminder automation',
-            'ru': 'Полная автоматизация напоминаний',
-            'pl': 'Pelna automatyzacja przypomnien',
-            'pt': 'Automacao completa de lembretes',
-            'tr': 'Tam hatirlatici otomasyonu',
-            'zh': '完整提醒自动化',
-            'es': 'Automatizacion completa de recordatorios',
-            'it': 'Automazione completa dei promemoria',
-            'de': 'Vollstandige Erinnerungs-Automatisierung',
+            'en': 'Automated reminders (in-app, optional SMS)',
+            'ru': 'Автоматические напоминания (в приложении, опционально SMS)',
+            'pl': 'Automatyczne przypomnienia (w aplikacji, opcjonalnie SMS)',
+            'pt': 'Lembretes automáticos (no app, SMS opcional)',
+            'tr': 'Otomatik hatırlatıcılar (uygulama içi, isteğe bağlı SMS)',
+            'zh': '自动提醒（应用内，支持可选短信）',
+            'es': 'Recordatorios automáticos (en app, SMS opcional)',
+            'it': 'Promemoria automatici (in-app, SMS opzionale)',
+            'de': 'Automatische Erinnerungen (in der App, optional per SMS)',
           }),
           _pick(context, {
             'en': 'Unlimited chat attachments',
@@ -907,15 +937,15 @@ class SubscriptionTexts {
             'de': 'Unbegrenzte Chat-Anhange',
           }),
           _pick(context, {
-            'en': 'Cloud media sync',
-            'ru': 'Синхронизация медиа с облаком',
-            'pl': 'Synchronizacja mediow w chmurze',
-            'pt': 'Sincronizacao de midia em nuvem',
-            'tr': 'Bulut medya esitleme',
-            'zh': '云端媒体同步',
-            'es': 'Sincronizacion de medios en la nube',
-            'it': 'Sincronizzazione media cloud',
-            'de': 'Cloud-Medien-Synchronisierung',
+            'en': 'Cloud data sync across devices',
+            'ru': 'Облачная синхронизация данных между устройствами',
+            'pl': 'Synchronizacja danych w chmurze między urządzeniami',
+            'pt': 'Sincronização de dados em nuvem entre dispositivos',
+            'tr': 'Cihazlar arasında bulut veri senkronizasyonu',
+            'zh': '跨设备云端数据同步',
+            'es': 'Sincronización de datos en la nube entre dispositivos',
+            'it': 'Sincronizzazione dati cloud tra dispositivi',
+            'de': 'Cloud-Datensynchronisierung zwischen Geräten',
           }),
           _pick(context, {
             'en': 'Revenue and repeat-client analytics',
@@ -929,15 +959,15 @@ class SubscriptionTexts {
             'de': 'Umsatz- und Stammkunden-Analysen',
           }),
           _pick(context, {
-            'en': 'Export and priority support',
-            'ru': 'Экспорт и приоритетная поддержка',
-            'pl': 'Eksport i priorytetowe wsparcie',
-            'pt': 'Exportacao e suporte prioritario',
-            'tr': 'Disa aktarma ve oncelikli destek',
-            'zh': '导出与优先支持',
-            'es': 'Exportacion y soporte prioritario',
-            'it': 'Export e supporto prioritario',
-            'de': 'Export und priorisierter Support',
+            'en': 'CRM campaigns',
+            'ru': 'CRM-рассылки',
+            'pl': 'Kampanie CRM',
+            'pt': 'Campanhas de CRM',
+            'tr': 'CRM kampanyaları',
+            'zh': 'CRM 活动',
+            'es': 'Campañas CRM',
+            'it': 'Campagne CRM',
+            'de': 'CRM-Kampagnen',
           }),
         ];
       case AppPlan.business:
@@ -987,15 +1017,15 @@ class SubscriptionTexts {
             'de': 'Daten-Synchronisierung in der gesamten Organisation',
           }),
           _pick(context, {
-            'en': 'Performance view by staff member',
-            'ru': 'Оценка эффективности по каждому сотруднику',
-            'pl': 'Widok wydajnosci wedlug pracownika',
-            'pt': 'Visao de desempenho por membro da equipe',
-            'tr': 'Personel bazinda performans gorunumu',
-            'zh': '按员工查看绩效',
-            'es': 'Vista de rendimiento por empleado',
-            'it': 'Vista performance per membro del team',
-            'de': 'Leistungsansicht pro Mitarbeiter',
+            'en': 'Work assignment by staff member',
+            'ru': 'Распределение задач по сотрудникам',
+            'pl': 'Przydział zadań według pracownika',
+            'pt': 'Distribuição de tarefas por membro da equipe',
+            'tr': 'Personele göre iş atama',
+            'zh': '按员工分配任务',
+            'es': 'Asignación de tareas por empleado',
+            'it': 'Assegnazione attività per membro del team',
+            'de': 'Aufgabenverteilung pro Mitarbeiter',
           }),
           _pick(context, {
             'en': 'Team chat and invite flow',
@@ -1113,5 +1143,95 @@ class SubscriptionTexts {
       'de': 'Setze',
     });
     return '$prefix ${planName(context, plan)}';
+  }
+
+  static String planActivated(BuildContext context, String planTitle) {
+    final prefix = _pick(context, {
+      'en': 'Plan',
+      'ru': 'Тариф',
+      'uk': 'Тариф',
+      'pl': 'Plan',
+      'pt': 'Plano',
+      'tr': 'Plan',
+      'zh': '套餐',
+      'es': 'Plan',
+      'it': 'Piano',
+      'de': 'Tarif',
+    });
+    final suffix = _pick(context, {
+      'en': 'activated',
+      'ru': 'активирован',
+      'uk': 'активовано',
+      'pl': 'aktywowany',
+      'pt': 'ativado',
+      'tr': 'aktif edildi',
+      'zh': '已激活',
+      'es': 'activado',
+      'it': 'attivato',
+      'de': 'aktiviert',
+    });
+    return '$prefix $planTitle $suffix.';
+  }
+
+  static String purchaseFailed(BuildContext context, String detail) {
+    final prefix = _pick(context, {
+      'en': 'Purchase failed',
+      'ru': 'Ошибка покупки',
+      'uk': 'Помилка покупки',
+      'pl': 'Blad zakupu',
+      'pt': 'Falha na compra',
+      'tr': 'Satin alma hatasi',
+      'zh': '购买失败',
+      'es': 'Error en la compra',
+      'it': 'Acquisto fallito',
+      'de': 'Kauf fehlgeschlagen',
+    });
+    return '$prefix: $detail';
+  }
+
+  static String restorePurchasesLabel(BuildContext context) {
+    return _pick(context, {
+      'en': 'Restore purchases',
+      'ru': 'Восстановить покупки',
+      'uk': 'Відновити покупки',
+      'pl': 'Przywroc zakupy',
+      'pt': 'Restaurar compras',
+      'tr': 'Satin alimlari geri yukle',
+      'zh': '恢复购买',
+      'es': 'Restaurar compras',
+      'it': 'Ripristina acquisti',
+      'de': 'Kaeufe wiederherstellen',
+    });
+  }
+
+  static String purchasesRestored(BuildContext context) {
+    return _pick(context, {
+      'en': 'Purchases restored.',
+      'ru': 'Покупки восстановлены.',
+      'uk': 'Покупки відновлено.',
+      'pl': 'Zakupy przywrocono.',
+      'pt': 'Compras restauradas.',
+      'tr': 'Satin alimlar geri yuklendi.',
+      'zh': '购买已恢复。',
+      'es': 'Compras restauradas.',
+      'it': 'Acquisti ripristinati.',
+      'de': 'Kaeufe wiederhergestellt.',
+    });
+  }
+
+  static String restoreFailed(BuildContext context, String detail) {
+    final prefix = _pick(context, {
+      'en': 'Restore failed',
+      'ru': 'Ошибка восстановления',
+      'uk': 'Помилка відновлення',
+      'pl': 'Blad przywracania',
+      'pt': 'Falha na restauracao',
+      'tr': 'Geri yukleme hatasi',
+      'zh': '恢复失败',
+      'es': 'Error al restaurar',
+      'it': 'Ripristino fallito',
+      'de': 'Wiederherstellung fehlgeschlagen',
+    });
+    return '$prefix: $detail';
   }
 }

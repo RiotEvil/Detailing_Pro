@@ -36,7 +36,7 @@ val hasReleaseSigning =
     !releaseStorePassword.isNullOrEmpty()
 
 android {
-    namespace = "com.example.flutter_application_1"
+    namespace = "com.detailing.business.app"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 

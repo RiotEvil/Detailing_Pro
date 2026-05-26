@@ -10,7 +10,7 @@
 -dontwarn com.google.android.gms.**
 
 # Hive
--keep class com.example.flutter_application_1.** { *; }
+-keep class com.detailing.business.app.** { *; }
 -keep class * extends com.google.protobuf.GeneratedMessageLite { *; }
 
 # Google Sign-In
@@ -18,7 +18,7 @@
 -keep interface com.google.android.gms.auth.api.signin.** { *; }
 
 # Keep model classes (for Hive/serialization)
--keep class com.example.flutter_application_1.models.** { *; }
+-keep class com.detailing.business.app.models.** { *; }
 
 # Keep enums (important for Dart enums used in Hive)
 -keepclassmembers enum * {

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -29,6 +30,21 @@ class JobsScreen extends StatefulWidget {
 
 class _JobsScreenState extends State<JobsScreen> {
   _OrdersViewFilter _filter = _OrdersViewFilter.active;
+
+  void _deleteOrderPhotos(Map order) {
+    final paths = <String>[
+      ...((order['beforePhotos'] as List?)?.map((e) => e.toString()) ?? []),
+      ...((order['afterPhotos'] as List?)?.map((e) => e.toString()) ?? []),
+      ...((order['photos'] as List?)?.map((e) => e.toString()) ?? []),
+    ];
+    for (final path in paths) {
+      if (path.isEmpty) continue;
+      try {
+        final f = File(path);
+        if (f.existsSync()) f.deleteSync();
+      } catch (_) {}
+    }
+  }
 
   bool _canMasterAccessOrder(
     Map<String, dynamic> order,
@@ -92,12 +108,12 @@ class _JobsScreenState extends State<JobsScreen> {
             }
           }
 
-          unawaited(
+          WidgetsBinding.instance.addPostFrameCallback((_) {
             OrderReminderService.syncForOrders(
               orders: entries.map((entry) => entry.value),
               l10n: l10n,
-            ),
-          );
+            ).ignore();
+          });
 
           if (entries.isEmpty) {
             return EmptyState(
@@ -273,6 +289,8 @@ class _JobsScreenState extends State<JobsScreen> {
                             return;
                           }
                           final orderId = order['id']?.toString();
+                          // Delete local photo files before removing the record.
+                          _deleteOrderPhotos(order);
                           box.delete(key);
                           unawaited(
                             AppDataService.deleteOrderFromCloud(orderId),
@@ -680,6 +698,7 @@ class _OrderCard extends StatelessWidget {
       channelDescription: l10n.ordersChannelDescription,
       importance: Importance.max,
       priority: Priority.high,
+      icon: 'ic_launcher_foreground',
     );
     final platformChannelSpecifics = NotificationDetails(
       android: androidPlatformChannelSpecifics,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/core/constants.dart';
+import 'package:flutter_application_1/models/model_utils.dart';
 
 @immutable
 class Order {
@@ -91,39 +92,38 @@ class Order {
   }
 
   factory Order.fromMap(Map<dynamic, dynamic> map) {
-    final legacyPhotos = map['photos'] != null
-        ? List<String>.from(map['photos'])
-        : const <String>[];
-    final parsedBeforePhotos = map['beforePhotos'] != null
-        ? List<String>.from(map['beforePhotos'])
-        : const <String>[];
+    final legacyPhotos = parseStringList(map['photos'], field: 'Order.photos');
+    final parsedBeforePhotos = parseStringList(map['beforePhotos'], field: 'Order.beforePhotos');
     final parsedAfterPhotos = map['afterPhotos'] != null
-        ? List<String>.from(map['afterPhotos'])
+        ? parseStringList(map['afterPhotos'], field: 'Order.afterPhotos')
         : legacyPhotos;
-    final parsedServices =
-        (map['services'] as List?)
-            ?.map((e) => e.toString().trim())
-            .where((e) => e.isNotEmpty)
-            .toList() ??
-        const <String>[];
+    final parsedServices = parseStringList(map['services'], field: 'Order.services')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
     final displayService = map['service']?.toString().trim() ?? '';
     final effectiveServices = parsedServices.isNotEmpty
         ? parsedServices
         : (displayService.isNotEmpty ? <String>[displayService] : <String>[]);
 
+    final car = map['car']?.toString() ?? '';
+    final client = map['client']?.toString() ?? '';
+    if (car.isEmpty) debugPrint('[Order] missing car field, id=${map['id']}');
+    if (client.isEmpty) debugPrint('[Order] missing client field, id=${map['id']}');
+
     return Order(
       id: map['id']?.toString(),
       clientId: map['clientId']?.toString(),
-      car: map['car']?.toString() ?? '',
-      client: map['client']?.toString() ?? '',
+      car: car,
+      client: client,
       service: displayService,
       services: effectiveServices,
       assignedToUid: map['assignedToUid']?.toString(),
       assignedToName: map['assignedToName']?.toString(),
-      duration: (map['duration'] as num?)?.toInt() ?? 0,
-      price: (map['price'] as num?)?.toDouble() ?? 0.0,
-      materialCost: (map['materialCost'] as num?)?.toDouble() ?? 0.0,
-      laborCost: (map['laborCost'] as num?)?.toDouble() ?? 0.0,
+      duration: parseInt(map['duration'], field: 'Order.duration'),
+      price: parseDouble(map['price'], field: 'Order.price'),
+      materialCost: parseDouble(map['materialCost'], field: 'Order.materialCost'),
+      laborCost: parseDouble(map['laborCost'], field: 'Order.laborCost'),
       status: OrderStatus.fromName(map['status']?.toString()),
       timestamp: map['timestamp'] is int
           ? DateTime.fromMillisecondsSinceEpoch(map['timestamp'] as int)

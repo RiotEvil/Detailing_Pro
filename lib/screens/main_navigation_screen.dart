@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_application_1/l10n/app_localizations.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../core/constants.dart';
+import '../core/onboarding_prefs.dart';
 import 'dashboard_screen.dart';
 import 'jobs_screen.dart';
 import 'clients_screen.dart';
@@ -25,10 +27,31 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _selectedIndex = 0;
+  bool _hintInProgress = false;
+  bool _initialHintsScheduled = false;
+  late final Box _settingsBox;
+
+  @override
+  void initState() {
+    super.initState();
+    _settingsBox = Hive.box(HiveBoxes.settings);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_initialHintsScheduled) return;
+    _initialHintsScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      _maybeShowHintForIndex(_selectedIndex);
+    });
+  }
 
   void _navigate(int index) {
     ScaffoldMessenger.of(context).clearSnackBars();
     setState(() => _selectedIndex = index);
+    _maybeShowHintForIndex(index);
   }
 
   List<_NavItem> get _navItems {
@@ -39,36 +62,43 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
     final items = [
       _NavItem(
+        id: 'dashboard',
         icon: Icons.dashboard,
         label: l10n.navDashboard,
         page: const DashboardScreen(),
       ),
       _NavItem(
+        id: 'orders',
         icon: Icons.list_alt,
         label: l10n.navOrders,
         page: const JobsScreen(),
       ),
       _NavItem(
+        id: 'clients',
         icon: Icons.people,
         label: l10n.navClients,
         page: const ClientsScreen(),
       ),
       _NavItem(
+        id: 'calendar',
         icon: Icons.calendar_month,
         label: l10n.navCalendar,
         page: const CalendarScreen(),
       ),
       _NavItem(
+        id: 'inventory',
         icon: Icons.science,
         label: l10n.navInventory,
         page: const InventoryScreen(),
       ),
       _NavItem(
+        id: 'photos',
         icon: Icons.photo_library,
         label: l10n.navPhotos,
         page: const PhotosScreen(),
       ),
       _NavItem(
+        id: 'settings',
         icon: Icons.settings,
         label: l10n.navSettings,
         page: const SettingsScreen(),
@@ -79,6 +109,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       items.insert(
         5,
         _NavItem(
+          id: 'stats',
           icon: Icons.bar_chart,
           label: l10n.navStats,
           page: const StatsScreen(),
@@ -89,12 +120,83 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     return items;
   }
 
-  Widget _getPage(int index) {
-    final navItems = _navItems;
-    if (_selectedIndex >= navItems.length) {
-      _selectedIndex = 0;
+  Future<void> _maybeShowHintForIndex(int index) async {
+    if (_hintInProgress) return;
+    if (_settingsBox.get(
+          OnboardingPrefs.keyPostAuthCompleted,
+          defaultValue: false,
+        ) ==
+        true) {
+      return;
     }
-    return navItems[index].page;
+
+    final navItems = _navItems;
+    if (index < 0 || index >= navItems.length) return;
+
+    final item = navItems[index];
+    if (OnboardingPrefs.isNavHintSeen(_settingsBox, item.id)) {
+      return;
+    }
+
+    final message = _hintMessage(item.id);
+    if (message == null || message.isEmpty) {
+      await OnboardingPrefs.markNavHintSeen(_settingsBox, item.id);
+      return;
+    }
+
+    _hintInProgress = true;
+    if (!mounted) {
+      _hintInProgress = false;
+      return;
+    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(seconds: 5),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+    await OnboardingPrefs.markNavHintSeen(_settingsBox, item.id);
+    _hintInProgress = false;
+  }
+
+  String? _hintMessage(String id) {
+    final lang = Localizations.localeOf(context).languageCode.toLowerCase();
+    final isRu = lang == 'ru';
+
+    final ru = {
+      'dashboard': 'Подсказка: здесь сводка дня и ключевые показатели.',
+      'orders':
+          'Подсказка: в заказах удобно создавать и вести работу по этапам.',
+      'clients': 'Подсказка: храните базу клиентов и историю обращений.',
+      'settings':
+          'Подсказка: в настройках можно включать подсказки и менять параметры приложения.',
+      'calendar':
+          'Подсказка: календарь показывает занятость и помогает планировать нагрузку.',
+      'inventory':
+          'Подсказка: следите за остатками, чтобы не срывать работы из-за расходников.',
+      'photos':
+          'Подсказка: фото-архив помогает фиксировать результат и прогресс по заказам.',
+      'stats':
+          'Подсказка: аналитика показывает динамику выручки и эффективность команды.',
+    };
+
+    final en = {
+      'dashboard': 'Tip: this screen shows your day summary and key metrics.',
+      'orders':
+          'Tip: use Orders to create jobs and track progress through stages.',
+      'clients': 'Tip: keep your client base and visit history organized here.',
+      'settings':
+          'Tip: in Settings you can reopen hints and adjust app behavior.',
+      'calendar':
+          'Tip: calendar helps you manage workload and schedule availability.',
+      'inventory': 'Tip: monitor stock levels to avoid workflow interruptions.',
+      'photos': 'Tip: keep before/after and process photos for each job.',
+      'stats':
+          'Tip: analytics helps you track revenue trends and team performance.',
+    };
+
+    return isRu ? ru[id] : en[id];
   }
 
   @override
@@ -172,7 +274,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           Expanded(
             child: Container(
               color: AppColors.background,
-              child: _getPage(_selectedIndex),
+              child: IndexedStack(
+                index: _selectedIndex,
+                children: _navItems.map((item) => item.page).toList(),
+              ),
             ),
           ),
         ],
@@ -183,7 +288,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   Widget _buildMobileLayout(AppLocalizations l10n) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: _getPage(_selectedIndex),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _navItems.map((item) => item.page).toList(),
+      ),
       drawer: Drawer(
         backgroundColor: AppColors.surface,
         child: ListView(
@@ -265,9 +373,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 }
 
 class _NavItem {
+  final String id;
   final IconData icon;
   final String label;
   final Widget page;
 
-  const _NavItem({required this.icon, required this.label, required this.page});
+  const _NavItem({
+    required this.id,
+    required this.icon,
+    required this.label,
+    required this.page,
+  });
 }

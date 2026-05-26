@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_application_1/models/model_utils.dart';
 
 @immutable
 class Chemical {
@@ -45,17 +46,18 @@ class Chemical {
   }
 
   factory Chemical.fromMap(Map<dynamic, dynamic> map) {
-    // Безопасное приведение к int, так как Hive может вернуть double
+    final name = map['name']?.toString() ?? '';
+    if (name.isEmpty) debugPrint('[Chemical] missing name field, id=${map['id']}');
     return Chemical(
       id: map['id']?.toString(),
-      name: map['name']?.toString() ?? '',
+      name: name,
       brand: map['brand']?.toString() ?? '',
       category: map['category']?.toString() ?? '',
       pH: map['pH']?.toString(),
       dilution: map['dilution']?.toString(),
       usage: map['usage']?.toString(),
-      amount: (map['amount'] as num?)?.toInt() ?? 0,
-      minAmount: (map['minAmount'] as num?)?.toInt() ?? 200,
+      amount: parseInt(map['amount'], field: 'Chemical.amount'),
+      minAmount: parseInt(map['minAmount'], field: 'Chemical.minAmount', defaultValue: 200),
     );
   }
 

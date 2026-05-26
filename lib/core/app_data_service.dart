@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io' show ContentType, HttpClient, HttpHeaders;
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -8,6 +10,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import 'cloud_tenant_paths.dart';
 import 'constants.dart';
+import 'write_queue.dart';
 
 /// Central data service: writes to both Hive (local) and Firestore (cloud).
 /// Subscribes to Firestore and mirrors incoming changes to Hive, so every
@@ -15,11 +18,17 @@ import 'constants.dart';
 class AppDataService {
   AppDataService._();
 
+  static const String _functionsRegion = 'europe-west3';
+
   static StreamSubscription<QuerySnapshot>? _ordersSub;
   static StreamSubscription<QuerySnapshot>? _clientsSub;
   static StreamSubscription<QuerySnapshot>? _inventorySub;
   static StreamSubscription<QuerySnapshot>? _servicesSub;
   static bool _syncActive = false;
+
+  /// Notifies the UI when a Firestore stream error occurs (e.g. offline).
+  /// Resets to false when sync restarts or is stopped.
+  static final ValueNotifier<bool> hasSyncError = ValueNotifier(false);
 
   /// IDs currently being deleted from Firestore — prevents the snapshot
   /// listener from re-adding them to Hive before the delete completes.
@@ -38,7 +47,10 @@ class AppDataService {
   static Future<void> startCloudSync() async {
     if (!_firebaseReady || _orgId == null || _syncActive) return;
     _syncActive = true;
+    hasSyncError.value = false;
     debugPrint('[DataService] Cloud sync started for org: $_orgId');
+    await WriteQueue.flush();
+    await _ensureOrgQuotasOnServer();
     _subscribeOrders();
     _subscribeClients();
     _subscribeInventory();
@@ -47,6 +59,7 @@ class AppDataService {
 
   static Future<void> stopCloudSync() async {
     _syncActive = false;
+    hasSyncError.value = false;
     await _ordersSub?.cancel();
     await _clientsSub?.cancel();
     await _inventorySub?.cancel();
@@ -68,8 +81,14 @@ class AppDataService {
     _ordersSub = CloudTenantPaths.orders(FirebaseFirestore.instance, orgId)
         .snapshots()
         .listen(
-          (snap) => _mirrorToHive(HiveBoxes.orders, snap.docs),
-          onError: (e) => debugPrint('[DataService] orders sub error: $e'),
+          (snap) {
+            hasSyncError.value = false;
+            _mirrorToHive(HiveBoxes.orders, snap.docs);
+          },
+          onError: (e) {
+            debugPrint('[DataService] orders sub error: $e');
+            hasSyncError.value = true;
+          },
         );
   }
 
@@ -84,6 +103,13 @@ class AppDataService {
       ).doc(id).set(_toFirestore(orderMap), SetOptions(merge: true));
     } catch (e) {
       debugPrint('[DataService] syncOrderToCloud error: $e');
+      if (_isPermissionDenied(e)) return;
+      await WriteQueue.enqueueSet(
+        orgId: _orgId!,
+        collection: 'orders',
+        docId: id,
+        data: orderMap,
+      );
     }
   }
 
@@ -97,6 +123,13 @@ class AppDataService {
       ).doc(firestoreId).delete();
     } catch (e) {
       debugPrint('[DataService] deleteOrderFromCloud error: $e');
+      if (!_isPermissionDenied(e)) {
+        await WriteQueue.enqueueDelete(
+          orgId: _orgId!,
+          collection: 'orders',
+          docId: firestoreId,
+        );
+      }
     } finally {
       _pendingDeleteIds.remove(firestoreId);
     }
@@ -112,8 +145,14 @@ class AppDataService {
     _clientsSub = CloudTenantPaths.clients(FirebaseFirestore.instance, orgId)
         .snapshots()
         .listen(
-          (snap) => _mirrorToHive(HiveBoxes.clients, snap.docs),
-          onError: (e) => debugPrint('[DataService] clients sub error: $e'),
+          (snap) {
+            hasSyncError.value = false;
+            _mirrorToHive(HiveBoxes.clients, snap.docs);
+          },
+          onError: (e) {
+            debugPrint('[DataService] clients sub error: $e');
+            hasSyncError.value = true;
+          },
         );
   }
 
@@ -128,6 +167,13 @@ class AppDataService {
       ).doc(id).set(_toFirestore(clientMap), SetOptions(merge: true));
     } catch (e) {
       debugPrint('[DataService] syncClientToCloud error: $e');
+      if (_isPermissionDenied(e)) return;
+      await WriteQueue.enqueueSet(
+        orgId: _orgId!,
+        collection: 'clients',
+        docId: id,
+        data: clientMap,
+      );
     }
   }
 
@@ -140,6 +186,13 @@ class AppDataService {
       ).doc(clientId).delete();
     } catch (e) {
       debugPrint('[DataService] deleteClientFromCloud error: $e');
+      if (!_isPermissionDenied(e)) {
+        await WriteQueue.enqueueDelete(
+          orgId: _orgId!,
+          collection: 'clients',
+          docId: clientId,
+        );
+      }
     }
   }
 
@@ -155,8 +208,14 @@ class AppDataService {
           FirebaseFirestore.instance,
           orgId,
         ).snapshots().listen(
-          (snap) => _mirrorToHive(HiveBoxes.inventory, snap.docs),
-          onError: (e) => debugPrint('[DataService] inventory sub error: $e'),
+          (snap) {
+            hasSyncError.value = false;
+            _mirrorToHive(HiveBoxes.inventory, snap.docs);
+          },
+          onError: (e) {
+            debugPrint('[DataService] inventory sub error: $e');
+            hasSyncError.value = true;
+          },
         );
   }
 
@@ -173,6 +232,12 @@ class AppDataService {
       ).doc(id).set(itemMap, SetOptions(merge: true));
     } catch (e) {
       debugPrint('[DataService] syncInventoryToCloud error: $e');
+      await WriteQueue.enqueueSet(
+        orgId: _orgId!,
+        collection: 'inventory',
+        docId: id,
+        data: itemMap,
+      );
     }
   }
 
@@ -185,6 +250,11 @@ class AppDataService {
       ).doc(itemId).delete();
     } catch (e) {
       debugPrint('[DataService] deleteInventoryFromCloud error: $e');
+      await WriteQueue.enqueueDelete(
+        orgId: _orgId!,
+        collection: 'inventory',
+        docId: itemId,
+      );
     }
   }
 
@@ -198,8 +268,14 @@ class AppDataService {
     _servicesSub = CloudTenantPaths.services(FirebaseFirestore.instance, orgId)
         .snapshots()
         .listen(
-          (snap) => _mirrorToHive(HiveBoxes.services, snap.docs),
-          onError: (e) => debugPrint('[DataService] services sub error: $e'),
+          (snap) {
+            hasSyncError.value = false;
+            _mirrorToHive(HiveBoxes.services, snap.docs);
+          },
+          onError: (e) {
+            debugPrint('[DataService] services sub error: $e');
+            hasSyncError.value = true;
+          },
         );
   }
 
@@ -216,6 +292,12 @@ class AppDataService {
       ).doc(id).set(_toFirestore(serviceMap), SetOptions(merge: true));
     } catch (e) {
       debugPrint('[DataService] syncServiceToCloud error: $e');
+      await WriteQueue.enqueueSet(
+        orgId: _orgId!,
+        collection: 'services',
+        docId: id,
+        data: serviceMap,
+      );
     }
   }
 
@@ -228,6 +310,11 @@ class AppDataService {
       ).doc(serviceId).delete();
     } catch (e) {
       debugPrint('[DataService] deleteServiceFromCloud error: $e');
+      await WriteQueue.enqueueDelete(
+        orgId: _orgId!,
+        collection: 'services',
+        docId: serviceId,
+      );
     }
   }
 
@@ -253,6 +340,51 @@ class AppDataService {
   // ================================================================
   // HELPERS
   // ================================================================
+
+  static bool _isPermissionDenied(Object e) {
+    if (e is FirebaseException) {
+      return e.code == 'permission-denied';
+    }
+    return false;
+  }
+
+  /// Full recount of quota counters on the server (Admin SDK).
+  static Future<void> _ensureOrgQuotasOnServer() async {
+    if (!_firebaseReady) return;
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final projectId = Firebase.app().options.projectId;
+    if (projectId.isEmpty) return;
+
+    final idToken = await user.getIdToken();
+    if (idToken == null || idToken.isEmpty) return;
+
+    final uri = Uri.parse(
+      'https://$_functionsRegion-$projectId.cloudfunctions.net/ensureOrgQuotas',
+    );
+    final client = HttpClient()
+      ..connectionTimeout = const Duration(seconds: 15);
+
+    try {
+      final request = await client.postUrl(uri);
+      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $idToken');
+      request.headers.contentType = ContentType.json;
+      request.add(utf8.encode('{}'));
+      final response = await request.close().timeout(
+        const Duration(seconds: 15),
+      );
+      if (response.statusCode != 200) {
+        debugPrint(
+          '[DataService] ensureOrgQuotas failed: ${response.statusCode}',
+        );
+      }
+    } catch (e) {
+      debugPrint('[DataService] ensureOrgQuotas error: $e');
+    } finally {
+      client.close(force: true);
+    }
+  }
 
   /// Mirror Firestore snapshot docs to a Hive box (upsert by 'id' field).
   static void _mirrorToHive(

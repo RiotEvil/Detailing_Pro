@@ -1,10 +1,12 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_application_1/models/model_utils.dart';
 
 @immutable
 class Client {
   final String? id;
   final String name;
   final String? phone;
+  final String? email;
   final String? notes;
   final List<String> tags;
   final Map<String, String> carPhotos;
@@ -16,6 +18,7 @@ class Client {
     this.id,
     required this.name,
     this.phone,
+    this.email,
     this.notes,
     this.tags = const [],
     this.carPhotos = const {},
@@ -32,6 +35,7 @@ class Client {
       'id': id,
       'name': name,
       'phone': phone,
+      'email': email,
       'notes': notes,
       'tags': tags,
       'carPhotos': carPhotos,
@@ -42,14 +46,11 @@ class Client {
   }
 
   factory Client.fromMap(Map<dynamic, dynamic> map) {
-    final cars =
-        (map['cars'] as List?)?.map((e) => e.toString()).toList() ?? const [];
-    final tags =
-        (map['tags'] as List?)
-            ?.map((e) => e.toString().trim())
-            .where((e) => e.isNotEmpty)
-            .toList() ??
-        const [];
+    final cars = parseStringList(map['cars'], field: 'Client.cars');
+    final tags = parseStringList(map['tags'], field: 'Client.tags')
+        .map((e) => e.trim())
+        .where((e) => e.isNotEmpty)
+        .toList();
     final rawCarPhotos = map['carPhotos'];
     final parsedCarPhotos = <String, String>{};
     if (rawCarPhotos is Map) {
@@ -70,10 +71,14 @@ class Client {
       parsedCarPhotos[cars.first] = legacyPath;
     }
 
+    final name = map['name']?.toString() ?? '';
+    if (name.isEmpty) debugPrint('[Client] missing name field, id=${map['id']}');
+
     return Client(
       id: map['id']?.toString(),
-      name: map['name']?.toString() ?? '',
+      name: name,
       phone: map['phone']?.toString(),
+      email: map['email']?.toString(),
       notes: map['notes']?.toString(),
       tags: tags,
       carPhotos: parsedCarPhotos,
@@ -102,6 +107,7 @@ class Client {
     String? id,
     String? name,
     ValueGetter<String?>? phone,
+    ValueGetter<String?>? email,
     ValueGetter<String?>? notes,
     List<String>? tags,
     Map<String, String>? carPhotos,
@@ -113,6 +119,7 @@ class Client {
       id: id ?? this.id,
       name: name ?? this.name,
       phone: phone != null ? phone() : this.phone,
+      email: email != null ? email() : this.email,
       notes: notes != null ? notes() : this.notes,
       tags: tags ?? this.tags,
       carPhotos: carPhotos ?? this.carPhotos,
