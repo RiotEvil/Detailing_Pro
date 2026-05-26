@@ -49,3 +49,8 @@ app.*.map.json
 
 # Local build secrets (dart-define keys, RC API key, etc.)
 build_config.env
+
+# Local dev/test directories with hardcoded secrets
+crashfunctions/
+test_hive/
+.claude/
