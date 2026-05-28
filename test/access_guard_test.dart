@@ -23,12 +23,14 @@ void main() {
     await Hive.openBox(HiveBoxes.clients);
   });
 
-  setUp(() {
-    Hive.box(HiveBoxes.settings).clear();
+  setUp(() async {
+    await Hive.box(HiveBoxes.settings).clear();
   });
 
   tearDownAll(() async {
-    await Hive.close();
+    try {
+      await Hive.close().timeout(const Duration(seconds: 5));
+    } catch (_) {}
   });
 
   group('AccessGuard.countClients', () {
