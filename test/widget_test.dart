@@ -32,7 +32,10 @@ void main() {
   });
 
   tearDownAll(() async {
-    await Hive.close();
+    await Future.any([
+      Hive.close(),
+      Future.delayed(const Duration(seconds: 5)),
+    ]);
   });
 
   testWidgets('App starts and shows auth screen', (WidgetTester tester) async {
