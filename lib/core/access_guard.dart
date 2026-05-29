@@ -3,6 +3,7 @@ import 'package:flutter_application_1/l10n/app_localizations.dart';
 import 'package:hive/hive.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import 'analytics_service.dart';
 import 'constants.dart';
 import 'subscription_texts.dart';
 import '../screens/pricing_screen.dart';
@@ -106,20 +107,20 @@ class AccessGuard {
     required int existingClientsCount,
     bool isEditing = false,
   }) {
-    if (isEditing || !enforcesFreePlanLimits()) {
-      return true;
-    }
-    return existingClientsCount < freeClientsLimit;
+    if (isEditing || !enforcesFreePlanLimits()) return true;
+    final allowed = existingClientsCount < freeClientsLimit;
+    if (!allowed) AnalyticsService.logFreeLimitReached(limitType: 'clients');
+    return allowed;
   }
 
   static bool canCreateOrderThisMonth({
     required int activeOrdersThisMonthCount,
     bool isEditing = false,
   }) {
-    if (isEditing || !enforcesFreePlanLimits()) {
-      return true;
-    }
-    return activeOrdersThisMonthCount < freeActiveOrdersPerMonthLimit;
+    if (isEditing || !enforcesFreePlanLimits()) return true;
+    final allowed = activeOrdersThisMonthCount < freeActiveOrdersPerMonthLimit;
+    if (!allowed) AnalyticsService.logFreeLimitReached(limitType: 'orders');
+    return allowed;
   }
 
   static void showDenied(BuildContext context, {String? message}) {
@@ -139,6 +140,9 @@ class AccessGuard {
     required String message,
     required AppPlan requiredPlan,
   }) {
+    AnalyticsService.logFeatureLockedTap(feature: title);
+    bool didNavigateToPricing = false;
+
     return showModalBottomSheet<void>(
       context: context,
       backgroundColor: AppColors.surface,
@@ -173,6 +177,7 @@ class AccessGuard {
                   width: double.infinity,
                   child: FilledButton(
                     onPressed: () {
+                      didNavigateToPricing = true;
                       Navigator.pop(context);
                       Navigator.push(
                         context,
@@ -189,6 +194,10 @@ class AccessGuard {
           ),
         );
       },
-    );
+    ).then((_) {
+      if (!didNavigateToPricing) {
+        AnalyticsService.logPricingScreenDismissed();
+      }
+    });
   }
 }
