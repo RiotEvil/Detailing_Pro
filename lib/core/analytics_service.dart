@@ -38,6 +38,12 @@ class AnalyticsService {
     }
   }
 
+  static Future<void> logOnboardingCompleted() async {
+    try {
+      await _fa?.logEvent(name: 'onboarding_completed');
+    } catch (e) { _log(e); }
+  }
+
   // ── Orders ────────────────────────────────────────────────────────────────
 
   static Future<void> logOrderCreated({required double price}) async {
@@ -86,6 +92,30 @@ class AnalyticsService {
     } catch (e) {
       _log(e);
     }
+  }
+
+  static Future<void> logPricingScreenDismissed() async {
+    try {
+      await _fa?.logEvent(name: 'pricing_screen_dismissed');
+    } catch (e) { _log(e); }
+  }
+
+  static Future<void> logFeatureLockedTap({required String feature}) async {
+    try {
+      await _fa?.logEvent(
+        name: 'feature_locked_tap',
+        parameters: {'feature': feature},
+      );
+    } catch (e) { _log(e); }
+  }
+
+  static Future<void> logFreeLimitReached({required String limitType}) async {
+    try {
+      await _fa?.logEvent(
+        name: 'free_limit_reached',
+        parameters: {'limit_type': limitType},
+      );
+    } catch (e) { _log(e); }
   }
 
   // ── Online booking ────────────────────────────────────────────────────────
