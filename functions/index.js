@@ -15,6 +15,7 @@ const BILLING_AUDIT_RETENTION_DAYS = 180;
 const revenueCatSecret = defineSecret("REVENUECAT_SECRET_KEY");
 const twilioAccountSid = defineSecret("TWILIO_ACCOUNT_SID");
 const twilioAuthToken = defineSecret("TWILIO_AUTH_TOKEN");
+const anthropicApiKey = defineSecret("ANTHROPIC_API_KEY");
 // TWILIO_FROM_NUMBER is read from env (not a managed secret) so deployment
 // succeeds even before the number is provisioned. SMS sending is skipped
 // gracefully when the value is absent.
@@ -2995,6 +2996,67 @@ exports.resetMonthlyEmailCounters = onSchedule(
     if (count % BATCH_SIZE !== 0) await batch.commit();
 
     logger.info("resetMonthlyEmailCounters: done", {orgsReset: count});
+  },
+);
+
+// ── askAgent ──────────────────────────────────────────────────────────────────
+// Прокси к Claude API — используется агентским дашбордом
+exports.askAgent = onRequest(
+  {
+    region: REGION,
+    memory: "256MiB",
+    maxInstances: 10,
+    invoker: "public",
+    secrets: [anthropicApiKey],
+  },
+  async (req, res) => {
+    res.set("Access-Control-Allow-Origin", "*");
+    if (req.method === "OPTIONS") {
+      res.set("Access-Control-Allow-Methods", "POST");
+      res.set("Access-Control-Allow-Headers", "Content-Type");
+      res.status(204).send("");
+      return;
+    }
+
+    if (req.method !== "POST") {
+      res.status(405).json({error: "method-not-allowed"});
+      return;
+    }
+
+    const {system, messages} = req.body || {};
+    if (!messages || !Array.isArray(messages)) {
+      res.status(400).json({error: "invalid-payload"});
+      return;
+    }
+
+    const apiKey = anthropicApiKey.value();
+    if (!apiKey) {
+      res.status(503).json({error: "anthropic-key-not-configured"});
+      return;
+    }
+
+    try {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": apiKey,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 1000,
+          system,
+          messages,
+        }),
+      });
+
+      const data = await response.json();
+      res.status(response.status).json(data);
+    } catch (error) {
+      logger.error("askAgent failed", {error: String(error)});
+      res.status(500).json({error: "internal"});
+    }
   },
 );
 
