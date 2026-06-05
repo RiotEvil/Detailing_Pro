@@ -200,4 +200,72 @@ class AccessGuard {
       }
     });
   }
+
+  static Future<void> showSoftPaywall(BuildContext context) {
+    AnalyticsService.logFeatureLockedTap(feature: 'free_limit_paywall');
+    return showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  SubscriptionTexts.softPaywallTitle(ctx),
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  SubscriptionTexts.softPaywallSubtitle(ctx),
+                  style: const TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  SubscriptionTexts.softPaywallPrice(ctx),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton(
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      Navigator.push(
+                        ctx,
+                        MaterialPageRoute(
+                          builder: (_) => const PricingScreen(),
+                        ),
+                      );
+                    },
+                    child: Text(SubscriptionTexts.softPaywallCta(ctx)),
+                  ),
+                ),
+                Center(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: Text(SubscriptionTexts.softPaywallDismiss(ctx)),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
 }

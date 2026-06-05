@@ -14,6 +14,7 @@ import '../core/constants.dart';
 import '../core/subscription_texts.dart';
 import '../models/client.dart';
 import '../widgets/confirm_dialog.dart';
+import '../widgets/free_limit_banner.dart';
 
 class AddClientScreen extends StatefulWidget {
   final Client? clientToEdit;
@@ -218,12 +219,26 @@ class _AddClientScreenState extends State<AddClientScreen> {
     final l10n = AppLocalizations.of(context)!;
     final canManageBusinessData = _canManageBusinessData;
 
+    final clientsBox = Hive.box(HiveBoxes.clients);
+    final clientCount = AccessGuard.countClients(clientsBox);
+    final clientSlotsLeft = AccessGuard.freeClientsLimit - clientCount;
+    final showClientWarning = AccessGuard.enforcesFreePlanLimits() &&
+        widget.clientToEdit == null &&
+        clientSlotsLeft == 1;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
           widget.clientToEdit != null ? l10n.editClient : l10n.newClient,
         ),
       ),
+      bottomNavigationBar: showClientWarning
+          ? FreeLimitBanner(
+              message: SubscriptionTexts.clientSlotWarning(context, 1),
+              buttonLabel: SubscriptionTexts.upgradeLabel(context),
+              onUpgrade: () => AccessGuard.showSoftPaywall(context),
+            )
+          : null,
       body: Form(
         key: _formKey,
         child: ListView(
@@ -514,15 +529,7 @@ class _AddClientScreenState extends State<AddClientScreen> {
         existingClientsCount: AccessGuard.countClients(cBox),
         isEditing: widget.clientToEdit != null,
       )) {
-        await AccessGuard.showUpgradePrompt(
-          context,
-          title: SubscriptionTexts.freeClientLimitTitle(context),
-          message: SubscriptionTexts.freeClientLimitMessage(
-            context,
-            AccessGuard.freeClientsLimit,
-          ),
-          requiredPlan: AppPlan.pro,
-        );
+        await AccessGuard.showSoftPaywall(context);
         return;
       }
 

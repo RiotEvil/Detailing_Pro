@@ -1234,4 +1234,126 @@ class SubscriptionTexts {
     });
     return '$prefix: $detail';
   }
+
+  // --- Soft paywall ---
+
+  static String softPaywallTitle(BuildContext context) {
+    return _pick(context, {
+      'en': 'You\'ve reached the Free limit',
+      'ru': 'Вы достигли лимита Free',
+      'uk': 'Ви досягли ліміту Free',
+      'pl': 'Osiagnales limit planu Free',
+      'pt': 'Voce atingiu o limite Free',
+      'tr': 'Free limitine ulastiniz',
+      'zh': '您已达到免费套餐上限',
+      'es': 'Has alcanzado el limite Free',
+      'it': 'Hai raggiunto il limite Free',
+      'de': 'Du hast das Free-Limit erreicht',
+    });
+  }
+
+  static String softPaywallSubtitle(BuildContext context) {
+    return _pick(context, {
+      'en': 'Upgrade to Pro to keep going',
+      'ru': 'Перейдите на Pro чтобы продолжить работу',
+      'uk': 'Перейдіть на Pro щоб продовжити роботу',
+      'pl': 'Przejdz na Pro, aby kontynuowac prace',
+      'pt': 'Atualize para Pro para continuar trabalhando',
+      'tr': 'Calismaya devam etmek icin Pro\'ya gecin',
+      'zh': '升级到 Pro 以继续工作',
+      'es': 'Actualiza a Pro para seguir trabajando',
+      'it': 'Passa a Pro per continuare a lavorare',
+      'de': 'Upgrade auf Pro, um weiterzumachen',
+    });
+  }
+
+  static String softPaywallPrice(BuildContext context) {
+    return _pick(context, {
+      'en': '€10 / month',
+      'ru': '€10 / месяц',
+      'uk': '€10 / місяць',
+      'pl': '€10 / miesiac',
+      'pt': '€10 / mes',
+      'tr': '€10 / ay',
+      'zh': '€10 / 月',
+      'es': '€10 / mes',
+      'it': '€10 / mese',
+      'de': '€10 / Monat',
+    });
+  }
+
+  static String softPaywallCta(BuildContext context) {
+    return _pick(context, {
+      'en': 'Start 7-day free trial',
+      'ru': 'Начать 7 дней бесплатно',
+      'uk': 'Почати 7 днів безкоштовно',
+      'pl': 'Rozpocznij 7-dniowy okres probny',
+      'pt': 'Iniciar 7 dias gratis',
+      'tr': '7 gunluk ucretsiz deneme baslat',
+      'zh': '开始 7 天免费试用',
+      'es': 'Iniciar prueba gratuita de 7 dias',
+      'it': 'Inizia 7 giorni gratis',
+      'de': '7-tagige Testversion starten',
+    });
+  }
+
+  static String softPaywallDismiss(BuildContext context) {
+    return _pick(context, {
+      'en': 'Not now',
+      'ru': 'Не сейчас',
+      'uk': 'Не зараз',
+      'pl': 'Nie teraz',
+      'pt': 'Agora nao',
+      'tr': 'Simdi degil',
+      'zh': '暂时不用',
+      'es': 'Ahora no',
+      'it': 'Non ora',
+      'de': 'Nicht jetzt',
+    });
+  }
+
+  static String clientSlotWarning(BuildContext context, int remaining) {
+    return _pick(context, {
+      'en': '$remaining slot left. Pro — unlimited for €10/mo',
+      'ru': 'Остался $remaining слот. Pro — безлимит за €10/мес',
+      'uk': 'Залишився $remaining слот. Pro — безліміт за €10/міс',
+      'pl': 'Zostal $remaining slot. Pro — bez limitu za €10/mies',
+      'pt': '$remaining slot restante. Pro — ilimitado por €10/mes',
+      'tr': '$remaining slot kaldi. Pro — €10/ay sinirsiz',
+      'zh': '剩 $remaining 个名额。Pro — €10/月无限',
+      'es': 'Queda $remaining espacio. Pro — ilimitado por €10/mes',
+      'it': '$remaining slot rimasto. Pro — illimitato a €10/mese',
+      'de': '$remaining Slot ubrig. Pro — unbegrenzt fur €10/Mon',
+    });
+  }
+
+  static String orderSlotWarning(BuildContext context, int remaining) {
+    return _pick(context, {
+      'en': '$remaining order left this month',
+      'ru': 'Остался $remaining заказ в этом месяце',
+      'uk': 'Залишився $remaining замовлення цього місяця',
+      'pl': 'Zostalo $remaining zlecenie w tym miesiacu',
+      'pt': '$remaining pedido restante este mes',
+      'tr': 'Bu ay $remaining siparis kaldi',
+      'zh': '本月还剩 $remaining 个订单',
+      'es': 'Queda $remaining pedido este mes',
+      'it': '$remaining ordine rimasto questo mese',
+      'de': '$remaining Auftrag verbleibend diesen Monat',
+    });
+  }
+
+  static String upgradeLabel(BuildContext context) {
+    return _pick(context, {
+      'en': 'Upgrade',
+      'ru': 'Апгрейд',
+      'uk': 'Апгрейд',
+      'pl': 'Ulepszenie',
+      'pt': 'Upgrade',
+      'tr': 'Yukselt',
+      'zh': '升级',
+      'es': 'Mejorar',
+      'it': 'Aggiorna',
+      'de': 'Upgrade',
+    });
+  }
 }

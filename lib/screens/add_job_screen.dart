@@ -14,6 +14,7 @@ import '../core/constants.dart';
 import '../core/order_reminder_service.dart';
 import '../core/subscription_texts.dart';
 import '../models/models.dart';
+import '../widgets/free_limit_banner.dart';
 
 class AddJobScreen extends StatefulWidget {
   final Order? orderToEdit;
@@ -181,10 +182,24 @@ class _AddJobScreenState extends State<AddJobScreen> {
     final totalCost = materialCost + laborCost;
     final profit = _servicePrice - totalCost;
 
+    final ordersBox = Hive.box(HiveBoxes.orders);
+    final ordersThisMonth = _activeOrdersThisMonthCount(ordersBox);
+    final orderSlotsLeft = AccessGuard.freeActiveOrdersPerMonthLimit - ordersThisMonth;
+    final showOrderWarning = AccessGuard.enforcesFreePlanLimits() &&
+        !_isEdit &&
+        orderSlotsLeft == 1;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(_isEdit ? l10n.editOrderTitle : l10n.newOrderTitle),
       ),
+      bottomNavigationBar: showOrderWarning
+          ? FreeLimitBanner(
+              message: SubscriptionTexts.orderSlotWarning(context, 1),
+              buttonLabel: SubscriptionTexts.upgradeLabel(context),
+              onUpgrade: () => AccessGuard.showSoftPaywall(context),
+            )
+          : null,
       body: ValueListenableBuilder(
         valueListenable: Hive.box(HiveBoxes.clients).listenable(),
         builder: (context, Box clientsBox, _) {
@@ -857,15 +872,7 @@ class _AddJobScreenState extends State<AddJobScreen> {
         activeOrdersThisMonthCount: _activeOrdersThisMonthCount(ordersBox),
         isEditing: _isEdit,
       )) {
-        await AccessGuard.showUpgradePrompt(
-          context,
-          title: SubscriptionTexts.freeOrderLimitTitle(context),
-          message: SubscriptionTexts.freeOrderLimitMessage(
-            context,
-            AccessGuard.freeActiveOrdersPerMonthLimit,
-          ),
-          requiredPlan: AppPlan.pro,
-        );
+        await AccessGuard.showSoftPaywall(context);
         return;
       }
 
