@@ -139,6 +139,7 @@ class _PricingScreenState extends State<PricingScreen> {
                 plan: AppPlan.pro,
                 highlighted: true,
                 purchasable: true,
+                showTrial: true,
                 canBuy: !_pricesLoading && _livePrices.containsKey(AppPlan.pro),
                 description: SubscriptionTexts.planDescription(
                   context,
@@ -281,6 +282,7 @@ class _PlanCard extends StatefulWidget {
     this.highlighted = false,
     this.purchasable = false,
     this.canBuy = false,
+    this.showTrial = false,
   });
 
   final String title;
@@ -293,6 +295,7 @@ class _PlanCard extends StatefulWidget {
   final bool highlighted;
   final bool purchasable;
   final bool canBuy;
+  final bool showTrial;
 
   @override
   State<_PlanCard> createState() => _PlanCardState();
@@ -467,9 +470,26 @@ class _PlanCardState extends State<_PlanCard> {
                             color: Colors.white,
                           ),
                         )
-                      : Text(SubscriptionTexts.choosePlan(context, widget.title)),
+                      : Text(
+                          widget.showTrial
+                              ? SubscriptionTexts.trialCta(context)
+                              : SubscriptionTexts.choosePlan(
+                                  context,
+                                  widget.title,
+                                ),
+                        ),
                 ),
               ),
+              if (widget.showTrial) ...[
+                const SizedBox(height: 6),
+                Center(
+                  child: Text(
+                    SubscriptionTexts.afterTrialNote(context, widget.price),
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
             ],
           ],
         ),

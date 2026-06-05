@@ -1235,6 +1235,38 @@ class SubscriptionTexts {
     return '$prefix: $detail';
   }
 
+  // --- Trial CTA ---
+
+  static String trialCta(BuildContext context) {
+    return _pick(context, {
+      'en': 'Try free for 7 days',
+      'ru': 'Попробовать бесплатно 7 дней',
+      'uk': 'Спробувати безкоштовно 7 днів',
+      'pl': 'Wyprobuj za darmo przez 7 dni',
+      'pt': 'Experimentar gratis por 7 dias',
+      'tr': '7 gun ucretsiz dene',
+      'zh': '免费试用 7 天',
+      'es': 'Probar gratis 7 dias',
+      'it': 'Prova gratis 7 giorni',
+      'de': '7 Tage kostenlos testen',
+    });
+  }
+
+  static String afterTrialNote(BuildContext context, String price) {
+    return _pick(context, {
+      'en': 'Then $price/mo. Cancel anytime.',
+      'ru': 'Затем $price/мес. Отмена в любой момент.',
+      'uk': 'Потім $price/міс. Скасування будь-коли.',
+      'pl': 'Potem $price/mies. Anuluj kiedy chcesz.',
+      'pt': 'Depois $price/mes. Cancele quando quiser.',
+      'tr': 'Sonra $price/ay. Istediginizde iptal edin.',
+      'zh': '之后 $price/月，随时取消。',
+      'es': 'Luego $price/mes. Cancela cuando quieras.',
+      'it': 'Poi $price/mese. Disdici in qualsiasi momento.',
+      'de': 'Dann $price/Monat. Jederzeit kundbar.',
+    });
+  }
+
   // --- Soft paywall ---
 
   static String softPaywallTitle(BuildContext context) {
