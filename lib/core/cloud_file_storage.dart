@@ -15,6 +15,44 @@ class CloudFileStorage {
   static String? get _orgId =>
       Hive.box(HiveBoxes.settings).get('orgId')?.toString();
 
+  static Future<String> uploadOrderPhoto({
+    required String orderId,
+    required bool isBefore,
+    required XFile file,
+  }) async {
+    final orgId = _orgId;
+    if (orgId == null || orgId.isEmpty) {
+      throw Exception('Organization is not configured');
+    }
+
+    var ext = _extFromName(file.name, fallback: 'jpg');
+    final originalBytes = await file.readAsBytes();
+    final uploadBytes = await _compressImageIfNeeded(
+      originalBytes,
+      ext: ext,
+      maxLongSide: 1600,
+      quality: 78,
+    );
+    if (_isImageExt(ext)) ext = 'jpg';
+
+    final slot = isBefore ? 'before' : 'after';
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}.$ext';
+    final path = 'organizations/$orgId/orders/$orderId/$slot/$fileName';
+    final ref = FirebaseStorage.instance.ref(path);
+
+    await ref.putData(
+      uploadBytes,
+      SettableMetadata(contentType: _contentTypeFromExt(ext)),
+    );
+    return ref.getDownloadURL();
+  }
+
+  static Future<void> deleteOrderPhoto(String url) async {
+    try {
+      await FirebaseStorage.instance.refFromURL(url).delete();
+    } catch (_) {}
+  }
+
   static Future<String> uploadClientCarPhoto({
     required String clientId,
     required String car,

@@ -26,6 +26,10 @@ class AppDataService {
   static StreamSubscription<QuerySnapshot>? _servicesSub;
   static bool _syncActive = false;
 
+  static String? _lastQuotaOrgId;
+  static DateTime? _lastQuotaCheck;
+  static const Duration _quotaCacheDuration = Duration(hours: 4);
+
   /// Notifies the UI when a Firestore stream error occurs (e.g. offline).
   /// Resets to false when sync restarts or is stopped.
   static final ValueNotifier<bool> hasSyncError = ValueNotifier(false);
@@ -50,7 +54,15 @@ class AppDataService {
     hasSyncError.value = false;
     debugPrint('[DataService] Cloud sync started for org: $_orgId');
     await WriteQueue.flush();
-    await _ensureOrgQuotasOnServer();
+    final now = DateTime.now();
+    final orgId = _orgId!;
+    if (_lastQuotaOrgId != orgId ||
+        _lastQuotaCheck == null ||
+        now.difference(_lastQuotaCheck!) > _quotaCacheDuration) {
+      await _ensureOrgQuotasOnServer();
+      _lastQuotaCheck = now;
+      _lastQuotaOrgId = orgId;
+    }
     _subscribeOrders();
     _subscribeClients();
     _subscribeInventory();
@@ -79,6 +91,8 @@ class AppDataService {
     final orgId = _orgId;
     if (orgId == null) return;
     _ordersSub = CloudTenantPaths.orders(FirebaseFirestore.instance, orgId)
+        .orderBy('timestamp', descending: true)
+        .limit(1000)
         .snapshots()
         .listen(
           (snap) {
@@ -143,6 +157,7 @@ class AppDataService {
     final orgId = _orgId;
     if (orgId == null) return;
     _clientsSub = CloudTenantPaths.clients(FirebaseFirestore.instance, orgId)
+        .limit(1000)
         .snapshots()
         .listen(
           (snap) {
@@ -207,7 +222,7 @@ class AppDataService {
         CloudTenantPaths.inventory(
           FirebaseFirestore.instance,
           orgId,
-        ).snapshots().listen(
+        ).limit(500).snapshots().listen(
           (snap) {
             hasSyncError.value = false;
             _mirrorToHive(HiveBoxes.inventory, snap.docs);
@@ -266,6 +281,7 @@ class AppDataService {
     final orgId = _orgId;
     if (orgId == null) return;
     _servicesSub = CloudTenantPaths.services(FirebaseFirestore.instance, orgId)
+        .limit(200)
         .snapshots()
         .listen(
           (snap) {

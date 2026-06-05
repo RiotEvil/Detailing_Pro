@@ -9,6 +9,7 @@ import 'package:flutter_application_1/l10n/app_localizations.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 import '../core/app_data_service.dart';
+import '../core/cloud_file_storage.dart';
 import '../core/constants.dart';
 import '../core/order_services.dart';
 import '../core/order_reminder_service.dart';
@@ -39,6 +40,10 @@ class _JobsScreenState extends State<JobsScreen> {
     ];
     for (final path in paths) {
       if (path.isEmpty) continue;
+      if (path.startsWith('http')) {
+        unawaited(CloudFileStorage.deleteOrderPhoto(path));
+        continue;
+      }
       try {
         final f = File(path);
         if (f.existsSync()) f.deleteSync();

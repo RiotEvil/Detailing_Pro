@@ -8,6 +8,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../core/app_data_service.dart';
+import '../core/cloud_file_storage.dart';
 import '../core/constants.dart';
 import '../core/invoice_service.dart';
 import '../core/order_services.dart';
@@ -30,6 +31,7 @@ class OrderDetailsScreen extends StatefulWidget {
 class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
   final ImagePicker _picker = ImagePicker();
   late Map<String, dynamic> _orderData;
+  bool _uploading = false;
 
   String _servicesForDetails() {
     final items = orderServiceList(_orderData);
@@ -91,7 +93,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           ),
         ],
       ),
-      body: ListView(
+      body: Stack(
+        children: [
+          ListView(
         padding: const EdgeInsets.all(16),
         children: [
           Card(
@@ -237,7 +241,14 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
           ],
         ],
       ),
-    );
+      if (_uploading)
+        const ColoredBox(
+          color: Colors.black26,
+          child: Center(child: CircularProgressIndicator()),
+        ),
+    ],
+  ),
+);
   }
 
   List<String> _readPhotoList(dynamic raw) {
@@ -272,12 +283,21 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
 
     try {
       final picked = await _picker.pickImage(source: source, imageQuality: 88);
-      if (picked == null) {
-        return;
-      }
+      if (picked == null) return;
+
+      final orderId = _orderData['id']?.toString() ?? '';
+      if (orderId.isEmpty) return;
+
+      setState(() => _uploading = true);
+
+      final url = await CloudFileStorage.uploadOrderPhoto(
+        orderId: orderId,
+        isBefore: isBefore,
+        file: picked,
+      );
 
       final key = isBefore ? 'beforePhotos' : 'afterPhotos';
-      final updated = [..._readPhotoList(_orderData[key]), picked.path];
+      final updated = [..._readPhotoList(_orderData[key]), url];
       await _persistPhotos(
         beforePhotos: isBefore
             ? updated
@@ -292,6 +312,8 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(l10n.errorMessage(e.toString()))));
+    } finally {
+      if (mounted) setState(() => _uploading = false);
     }
   }
 
@@ -304,6 +326,9 @@ class _OrderDetailsScreenState extends State<OrderDetailsScreen> {
       afterPhotos.remove(path);
     }
     await _persistPhotos(beforePhotos: beforePhotos, afterPhotos: afterPhotos);
+    if (path.startsWith('http')) {
+      unawaited(CloudFileStorage.deleteOrderPhoto(path));
+    }
   }
 
   Future<void> _persistPhotos({
@@ -472,8 +497,19 @@ class _OrderPhotoThumb extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final image = kIsWeb
-        ? Image.network(path, fit: BoxFit.cover)
+    final isNetwork = kIsWeb || path.startsWith('http');
+    final image = isNetwork
+        ? Image.network(
+            path,
+            fit: BoxFit.cover,
+            errorBuilder: (_, _, _) => const SizedBox(
+              width: 160,
+              child: ColoredBox(
+                color: Color(0xFF2A2A2A),
+                child: Icon(Icons.broken_image_outlined, color: Colors.white54),
+              ),
+            ),
+          )
         : Image.file(
             File(path),
             fit: BoxFit.cover,
@@ -560,8 +596,17 @@ class _OrderPhotoViewer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final image = kIsWeb
-        ? Image.network(photoPath, fit: BoxFit.contain)
+    final isNetwork = kIsWeb || photoPath.startsWith('http');
+    final image = isNetwork
+        ? Image.network(
+            photoPath,
+            fit: BoxFit.contain,
+            errorBuilder: (_, _, _) => const Icon(
+              Icons.broken_image_outlined,
+              color: Colors.white54,
+              size: 64,
+            ),
+          )
         : Image.file(
             File(photoPath),
             fit: BoxFit.contain,
