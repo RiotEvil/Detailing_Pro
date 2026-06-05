@@ -1235,6 +1235,137 @@ class SubscriptionTexts {
     return '$prefix: $detail';
   }
 
+  // --- Paywall hero screen ---
+
+  static String paywallHeadline(BuildContext context) {
+    return _pick(context, {
+      'en': 'Still tracking jobs in WhatsApp?',
+      'ru': 'Ведёшь учёт в WhatsApp?',
+      'uk': 'Ведеш облік у WhatsApp?',
+      'pl': 'Prowadzisz ewidencje na WhatsApp?',
+      'pt': 'Ainda anotando tudo no WhatsApp?',
+      'tr': 'Isi hala WhatsApp\'tan mi takip ediyorsunuz?',
+      'zh': '还在用 WhatsApp 记账？',
+      'es': '¿Todavia llevas las cuentas en WhatsApp?',
+      'it': 'Gestisci ancora tutto su WhatsApp?',
+      'de': 'Verwaltest du noch alles uber WhatsApp?',
+    });
+  }
+
+  static String paywallSubtitle(BuildContext context) {
+    return _pick(context, {
+      'en':
+          'Detailing Pro keeps your clients, history, photos, and calculates income — automatically.',
+      'ru':
+          'Detailing Pro хранит клиентов, историю, фото и считает доход — автоматически.',
+      'uk':
+          'Detailing Pro зберігає клієнтів, історію, фото і рахує дохід — автоматично.',
+      'pl':
+          'Detailing Pro przechowuje klientow, historie, zdjecia i liczy dochod — automatycznie.',
+      'pt':
+          'Detailing Pro guarda clientes, historico, fotos e calcula a renda — automaticamente.',
+      'tr':
+          'Detailing Pro musterileri, gecmisi, fotograflari saklar ve geliri hesaplar — otomatik olarak.',
+      'zh': 'Detailing Pro 自动存储客户、历史记录、照片并计算收入。',
+      'es':
+          'Detailing Pro guarda clientes, historial, fotos y calcula ingresos — automaticamente.',
+      'it':
+          'Detailing Pro memorizza clienti, storico, foto e calcola i guadagni — automaticamente.',
+      'de':
+          'Detailing Pro speichert Kunden, Verlauf, Fotos und berechnet Einnahmen — automatisch.',
+    });
+  }
+
+  static String paywallBenefit1(BuildContext context) {
+    return _pick(context, {
+      'en': 'All clients in one place',
+      'ru': 'Все клиенты в одном месте',
+      'uk': 'Всі клієнти в одному місці',
+      'pl': 'Wszyscy klienci w jednym miejscu',
+      'pt': 'Todos os clientes em um lugar',
+      'tr': 'Tum musteriler tek bir yerde',
+      'zh': '所有客户一目了然',
+      'es': 'Todos los clientes en un solo lugar',
+      'it': 'Tutti i clienti in un unico posto',
+      'de': 'Alle Kunden an einem Ort',
+    });
+  }
+
+  static String paywallBenefit2(BuildContext context) {
+    return _pick(context, {
+      'en': 'Revenue stats for any period',
+      'ru': 'Статистика дохода за любой период',
+      'uk': 'Статистика доходу за будь-який період',
+      'pl': 'Statystyki przychodu za dowolny okres',
+      'pt': 'Estatisticas de receita para qualquer periodo',
+      'tr': 'Herhangi bir donem icin gelir istatistikleri',
+      'zh': '任意时期的收入统计',
+      'es': 'Estadisticas de ingresos para cualquier periodo',
+      'it': 'Statistiche entrate per qualsiasi periodo',
+      'de': 'Einnahmenstatistik fur beliebige Zeitraume',
+    });
+  }
+
+  static String paywallBenefit3(BuildContext context) {
+    return _pick(context, {
+      'en': 'Reminders — clients come back on their own',
+      'ru': 'Напоминания — клиенты возвращаются сами',
+      'uk': 'Нагадування — клієнти повертаються самі',
+      'pl': 'Przypomnienia — klienci wracaja sami',
+      'pt': 'Lembretes — os clientes voltam por conta propria',
+      'tr': 'Hatirlatmalar — musteriler kendileri geri donuyor',
+      'zh': '自动提醒——客户自己回来',
+      'es': 'Recordatorios — los clientes vuelven solos',
+      'it': 'Promemoria — i clienti tornano da soli',
+      'de': 'Erinnerungen — Kunden kommen von selbst zuruck',
+    });
+  }
+
+  static String paywallTagline(BuildContext context) {
+    return _pick(context, {
+      'en': 'Less than one car wash a month',
+      'ru': 'Меньше одной мойки в месяц',
+      'uk': 'Менше однієї мийки на місяць',
+      'pl': 'Mniej niz jedna myjnia miesiecznie',
+      'pt': 'Menos do que uma lavagem por mes',
+      'tr': 'Ayda bir aracin yikama ucretinden az',
+      'zh': '每月不到洗一辆车的钱',
+      'es': 'Menos que un lavado de auto al mes',
+      'it': 'Meno di un lavaggio al mese',
+      'de': 'Weniger als eine Autowaesche im Monat',
+    });
+  }
+
+  static String paywallActiveBadge(BuildContext context) {
+    return _pick(context, {
+      'en': '✓ Your current plan',
+      'ru': '✓ Ваш текущий план',
+      'uk': '✓ Ваш поточний план',
+      'pl': '✓ Twoj aktualny plan',
+      'pt': '✓ Seu plano atual',
+      'tr': '✓ Mevcut planınız',
+      'zh': '✓ 当前套餐',
+      'es': '✓ Tu plan actual',
+      'it': '✓ Il tuo piano attuale',
+      'de': '✓ Ihr aktueller Tarif',
+    });
+  }
+
+  static String paywallBusinessLabel(BuildContext context, String price) {
+    return _pick(context, {
+      'en': 'For teams: Business — $price / month',
+      'ru': 'Для команд: Business — $price / мес',
+      'uk': 'Для команд: Business — $price / міс',
+      'pl': 'Dla zespolow: Business — $price / mies',
+      'pt': 'Para equipes: Business — $price / mes',
+      'tr': 'Ekipler icin: Business — $price / ay',
+      'zh': '团队版：Business — $price / 月',
+      'es': 'Para equipos: Business — $price / mes',
+      'it': 'Per i team: Business — $price / mese',
+      'de': 'Fur Teams: Business — $price / Monat',
+    });
+  }
+
   // --- Trial CTA ---
 
   static String trialCta(BuildContext context) {
