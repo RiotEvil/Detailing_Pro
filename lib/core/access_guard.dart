@@ -11,8 +11,8 @@ import '../screens/pricing_screen.dart';
 class AccessGuard {
   AccessGuard._();
 
-  static const int freeClientsLimit = 20;
-  static const int freeActiveOrdersPerMonthLimit = 10;
+  static const int freeClientsLimit = 5;
+  static const int freeActiveOrdersPerMonthLimit = 3;
 
   static BusinessMode? currentBusinessMode() {
     final settingsBox = Hive.box(HiveBoxes.settings);
