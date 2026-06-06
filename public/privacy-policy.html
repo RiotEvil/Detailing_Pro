@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Политика конфиденциальности — Detailing Pro</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #121212;
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 40px 16px 60px;
+    }
+
+    .container { max-width: 720px; margin: 0 auto; }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+
+    .logo-icon {
+      width: 44px;
+      height: 44px;
+      background: #ff9800;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+    }
+
+    .logo-text { font-size: 20px; font-weight: 700; color: #fff; }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 6px;
+    }
+
+    .updated {
+      color: #757575;
+      font-size: 13px;
+      margin-bottom: 32px;
+    }
+
+    h2 {
+      font-size: 17px;
+      font-weight: 600;
+      color: #fff;
+      margin: 28px 0 10px;
+    }
+
+    p, li {
+      color: #bdbdbd;
+      font-size: 15px;
+      line-height: 1.7;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    ul li {
+      padding-left: 18px;
+      position: relative;
+      margin-bottom: 6px;
+    }
+
+    ul li::before {
+      content: '•';
+      color: #ff9800;
+      position: absolute;
+      left: 0;
+    }
+
+    a { color: #ff9800; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .card {
+      background: #1a1a1a;
+      border: 1px solid #2a2a2a;
+      border-radius: 14px;
+      padding: 20px 24px;
+      margin-top: 12px;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #2a2a2a;
+      margin: 40px 0;
+    }
+
+    .lang-toggle {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+
+    .lang-btn {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      background: #2a2a2a;
+      color: #bdbdbd;
+      text-decoration: none;
+    }
+
+    .lang-btn.active {
+      background: #ff9800;
+      color: #000;
+    }
+
+    footer {
+      margin-top: 48px;
+      text-align: center;
+      color: #424242;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="logo">
+    <div class="logo-icon">🚗</div>
+    <span class="logo-text">Detailing Pro</span>
+  </div>
+
+  <div class="lang-toggle">
+    <a href="#ru" class="lang-btn active">Русский</a>
+    <a href="#en" class="lang-btn">English</a>
+  </div>
+
+  <!-- ===== RUSSIAN ===== -->
+  <section id="ru">
+    <h1>Политика конфиденциальности</h1>
+    <p class="updated">Последнее обновление: 1 июня 2025 г.</p>
+
+    <p>Данная политика конфиденциальности описывает, как приложение <strong>Detailing Pro</strong> («мы», «наше приложение») собирает, использует и защищает ваши персональные данные.</p>
+
+    <h2>1. Кто мы</h2>
+    <p>Detailing Pro — мобильное приложение для управления детейлинг-студиями. Разработчик: индивидуальный предприниматель. Контакт: <a href="mailto:support@detailing-pro.app">support@detailing-pro.app</a></p>
+
+    <h2>2. Какие данные мы собираем</h2>
+    <div class="card">
+      <ul>
+        <li><strong>Данные аккаунта:</strong> email-адрес, имя (при входе через Google/Apple)</li>
+        <li><strong>Бизнес-данные:</strong> список клиентов, заказы, услуги, фотографии автомобилей</li>
+        <li><strong>Данные устройства:</strong> идентификатор устройства, версия ОС (для аналитики)</li>
+        <li><strong>Данные об использовании:</strong> события в приложении (Firebase Analytics)</li>
+        <li><strong>Данные о покупках:</strong> статус подписки (обрабатывается RevenueCat)</li>
+      </ul>
+    </div>
+
+    <h2>3. Как мы используем данные</h2>
+    <div class="card">
+      <ul>
+        <li>Предоставление и синхронизация функций приложения</li>
+        <li>Отправка напоминаний клиентам (с вашего разрешения)</li>
+        <li>Обработка и подтверждение платёжных подписок</li>
+        <li>Улучшение приложения на основе аналитики использования</li>
+        <li>Техническая поддержка пользователей</li>
+      </ul>
+    </div>
+
+    <h2>4. Хранение и безопасность</h2>
+    <p>Данные хранятся в облачной инфраструктуре <strong>Google Firebase</strong> (серверы в регионе Europe-West). Мы применяем шифрование при передаче (HTTPS/TLS) и шифрование локального хранилища (AES-256 через Hive). Доступ к данным ограничен правилами Firestore Security Rules.</p>
+
+    <h2>5. Передача третьим лицам</h2>
+    <div class="card">
+      <ul>
+        <li><strong>Google Firebase</strong> — облачное хранилище и аутентификация</li>
+        <li><strong>RevenueCat</strong> — управление подписками и платежами</li>
+        <li><strong>Google Analytics for Firebase</strong> — анонимная аналитика</li>
+      </ul>
+    </div>
+    <p style="margin-top:10px;">Мы не продаём, не обмениваем и не передаём ваши данные рекламным сетям или иным третьим лицам в маркетинговых целях.</p>
+
+    <h2>6. Ваши права</h2>
+    <div class="card">
+      <ul>
+        <li>Просмотр, исправление или экспорт своих данных</li>
+        <li>Удаление аккаунта и всех данных — через приложение (Настройки → Удалить аккаунт) или по запросу на email</li>
+        <li>Отзыв разрешений (уведомления, камера) в настройках устройства</li>
+      </ul>
+    </div>
+
+    <h2>7. Данные несовершеннолетних</h2>
+    <p>Приложение предназначено для использования лицами старше 16 лет. Мы осознанно не собираем данные детей.</p>
+
+    <h2>8. Изменения политики</h2>
+    <p>При существенных изменениях мы уведомим вас через приложение или по email. Дата последнего обновления указана в начале документа.</p>
+
+    <h2>9. Контакты</h2>
+    <p>По любым вопросам, связанным с конфиденциальностью: <a href="mailto:support@detailing-pro.app">support@detailing-pro.app</a></p>
+    <p style="margin-top:8px;">Страница удаления аккаунта: <a href="https://detailing-pro.web.app/account-deletion.html">detailing-pro.web.app/account-deletion.html</a></p>
+  </section>
+
+  <hr class="divider" />
+
+  <!-- ===== ENGLISH ===== -->
+  <section id="en">
+    <h1>Privacy Policy</h1>
+    <p class="updated">Last updated: June 1, 2025</p>
+
+    <p>This Privacy Policy describes how <strong>Detailing Pro</strong> ("we", "our app") collects, uses, and protects your personal data.</p>
+
+    <h2>1. Who We Are</h2>
+    <p>Detailing Pro is a mobile application for detailing studio management. Contact: <a href="mailto:support@detailing-pro.app">support@detailing-pro.app</a></p>
+
+    <h2>2. Data We Collect</h2>
+    <div class="card">
+      <ul>
+        <li><strong>Account data:</strong> email address, name (when signing in via Google/Apple)</li>
+        <li><strong>Business data:</strong> client list, orders, services, vehicle photos</li>
+        <li><strong>Device data:</strong> device identifier, OS version (for analytics)</li>
+        <li><strong>Usage data:</strong> in-app events (Firebase Analytics)</li>
+        <li><strong>Purchase data:</strong> subscription status (processed by RevenueCat)</li>
+      </ul>
+    </div>
+
+    <h2>3. How We Use Data</h2>
+    <div class="card">
+      <ul>
+        <li>Providing and syncing app features</li>
+        <li>Sending client reminders (with your permission)</li>
+        <li>Processing and verifying subscription payments</li>
+        <li>Improving the app based on usage analytics</li>
+        <li>Providing user support</li>
+      </ul>
+    </div>
+
+    <h2>4. Storage and Security</h2>
+    <p>Data is stored in <strong>Google Firebase</strong> infrastructure (Europe-West region). We use encryption in transit (HTTPS/TLS) and local storage encryption (AES-256 via Hive). Access is governed by Firestore Security Rules.</p>
+
+    <h2>5. Third-Party Sharing</h2>
+    <div class="card">
+      <ul>
+        <li><strong>Google Firebase</strong> — cloud storage and authentication</li>
+        <li><strong>RevenueCat</strong> — subscription and payment management</li>
+        <li><strong>Google Analytics for Firebase</strong> — anonymous analytics</li>
+      </ul>
+    </div>
+    <p style="margin-top:10px;">We do not sell, trade, or transfer your data to advertising networks or other third parties for marketing purposes.</p>
+
+    <h2>6. Your Rights</h2>
+    <div class="card">
+      <ul>
+        <li>Access, correct, or export your data</li>
+        <li>Delete your account and all data — via the app (Settings → Delete account) or by emailing us</li>
+        <li>Withdraw permissions (notifications, camera) in device settings</li>
+      </ul>
+    </div>
+
+    <h2>7. Children's Data</h2>
+    <p>The app is intended for users aged 16 and older. We do not knowingly collect data from children.</p>
+
+    <h2>8. Policy Changes</h2>
+    <p>For material changes, we will notify you via the app or by email. The last updated date is shown at the top of this document.</p>
+
+    <h2>9. Contact</h2>
+    <p>For any privacy-related questions: <a href="mailto:support@detailing-pro.app">support@detailing-pro.app</a></p>
+    <p style="margin-top:8px;">Account deletion page: <a href="https://detailing-pro.web.app/account-deletion.html">detailing-pro.web.app/account-deletion.html</a></p>
+  </section>
+
+  <footer>
+    &copy; 2025 Detailing Pro &nbsp;·&nbsp;
+    <a href="https://detailing-pro.web.app" style="color:#555;text-decoration:none;">detailing-pro.web.app</a>
+  </footer>
+
+</div>
+</body>
+</html>
