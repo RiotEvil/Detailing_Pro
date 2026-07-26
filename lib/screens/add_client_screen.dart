@@ -14,7 +14,6 @@ import '../core/constants.dart';
 import '../core/subscription_texts.dart';
 import '../models/client.dart';
 import '../widgets/confirm_dialog.dart';
-import '../widgets/free_limit_banner.dart';
 
 class AddClientScreen extends StatefulWidget {
   final Client? clientToEdit;
@@ -87,6 +86,29 @@ class _AddClientScreenState extends State<AddClientScreen> {
         _carPhotos[_cars.first] = widget.clientToEdit!.carPhotoPath!;
       }
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) => _showClientWarningIfNeeded());
+  }
+
+  void _showClientWarningIfNeeded() {
+    if (!mounted || widget.clientToEdit != null) return;
+    if (!AccessGuard.enforcesFreePlanLimits()) return;
+    final clientsBox = Hive.box(HiveBoxes.clients);
+    final slotsLeft = AccessGuard.freeClientsLimit - AccessGuard.countClients(clientsBox);
+    if (slotsLeft != 1) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(SubscriptionTexts.clientLimitWarning(context)),
+        action: SnackBarAction(
+          label: SubscriptionTexts.upgradeLabel(context),
+          onPressed: () => AccessGuard.showLimitPaywall(
+            context,
+            title: SubscriptionTexts.clientLimitPaywallTitle(context),
+            body: SubscriptionTexts.clientLimitPaywallBody(context),
+          ),
+        ),
+        duration: const Duration(seconds: 6),
+      ),
+    );
   }
 
   @override
@@ -219,26 +241,12 @@ class _AddClientScreenState extends State<AddClientScreen> {
     final l10n = AppLocalizations.of(context)!;
     final canManageBusinessData = _canManageBusinessData;
 
-    final clientsBox = Hive.box(HiveBoxes.clients);
-    final clientCount = AccessGuard.countClients(clientsBox);
-    final clientSlotsLeft = AccessGuard.freeClientsLimit - clientCount;
-    final showClientWarning = AccessGuard.enforcesFreePlanLimits() &&
-        widget.clientToEdit == null &&
-        clientSlotsLeft == 1;
-
     return Scaffold(
       appBar: AppBar(
         title: Text(
           widget.clientToEdit != null ? l10n.editClient : l10n.newClient,
         ),
       ),
-      bottomNavigationBar: showClientWarning
-          ? FreeLimitBanner(
-              message: SubscriptionTexts.clientSlotWarning(context, 1),
-              buttonLabel: SubscriptionTexts.upgradeLabel(context),
-              onUpgrade: () => AccessGuard.showSoftPaywall(context),
-            )
-          : null,
       body: Form(
         key: _formKey,
         child: ListView(
@@ -529,7 +537,11 @@ class _AddClientScreenState extends State<AddClientScreen> {
         existingClientsCount: AccessGuard.countClients(cBox),
         isEditing: widget.clientToEdit != null,
       )) {
-        await AccessGuard.showSoftPaywall(context);
+        await AccessGuard.showLimitPaywall(
+          context,
+          title: SubscriptionTexts.clientLimitPaywallTitle(context),
+          body: SubscriptionTexts.clientLimitPaywallBody(context),
+        );
         return;
       }
 

@@ -1519,4 +1519,94 @@ class SubscriptionTexts {
       'de': 'Upgrade',
     });
   }
+
+  static String clientLimitWarning(BuildContext context) {
+    return _pick(context, {
+      'en': '1 client slot remaining. Upgrade to Pro for unlimited clients.',
+      'ru': 'Остался 1 слот для клиента. Перейдите на Pro — безлимит клиентов.',
+      'uk': 'Залишився 1 слот для клієнта. Перейдіть на Pro — безліміт клієнтів.',
+      'pl': 'Zostało 1 miejsce dla klienta. Przejdź na Pro — bez limitu klientów.',
+      'pt': '1 vaga para cliente restante. Upgrade para Pro por clientes ilimitados.',
+      'tr': '1 müşteri yuvası kaldı. Sınırsız müşteri için Pro\'ya geçin.',
+      'zh': '还剩 1 个客户名额。升级到 Pro — 无限客户。',
+      'es': '1 espacio de cliente restante. Actualiza a Pro por clientes ilimitados.',
+      'it': '1 slot cliente rimanente. Passa a Pro per clienti illimitati.',
+      'de': '1 Kunden-Slot übrig. Upgrade auf Pro für unbegrenzte Kunden.',
+    });
+  }
+
+  static String orderLimitWarning(BuildContext context) {
+    return _pick(context, {
+      'en': '1 order remaining this month. Upgrade to Pro for unlimited orders.',
+      'ru': 'Остался 1 заказ в этом месяце. Перейдите на Pro — безлимит заказов.',
+      'uk': 'Залишилося 1 замовлення цього місяця. Перейдіть на Pro — безліміт замовлень.',
+      'pl': 'Zostało 1 zlecenie w tym miesiącu. Przejdź na Pro — bez limitu zleceń.',
+      'pt': '1 pedido restante este mês. Upgrade para Pro por pedidos ilimitados.',
+      'tr': 'Bu ay 1 sipariş kaldı. Sınırsız sipariş için Pro\'ya geçin.',
+      'zh': '本月还剩 1 个订单。升级到 Pro — 无限订单。',
+      'es': '1 pedido restante este mes. Actualiza a Pro por pedidos ilimitados.',
+      'it': '1 ordine rimasto questo mese. Passa a Pro per ordini illimitati.',
+      'de': '1 Auftrag diesen Monat übrig. Upgrade auf Pro für unbegrenzte Aufträge.',
+    });
+  }
+
+  static String clientLimitPaywallTitle(BuildContext context) {
+    return _pick(context, {
+      'en': 'Client limit reached',
+      'ru': 'Достигнут лимит клиентов',
+      'uk': 'Досягнуто ліміт клієнтів',
+      'pl': 'Osiągnięto limit klientów',
+      'pt': 'Limite de clientes atingido',
+      'tr': 'Müşteri limitine ulaşıldı',
+      'zh': '已达客户上限',
+      'es': 'Límite de clientes alcanzado',
+      'it': 'Limite clienti raggiunto',
+      'de': 'Kundenlimit erreicht',
+    });
+  }
+
+  static String clientLimitPaywallBody(BuildContext context) {
+    return _pick(context, {
+      'en': 'Upgrade to Pro to add unlimited clients',
+      'ru': 'Перейдите на Pro для неограниченного числа клиентов',
+      'uk': 'Перейдіть на Pro для необмеженої кількості клієнтів',
+      'pl': 'Przejdź na Pro, aby dodawać nieograniczoną liczbę klientów',
+      'pt': 'Upgrade para Pro para adicionar clientes ilimitados',
+      'tr': 'Sınırsız müşteri eklemek için Pro\'ya geçin',
+      'zh': '升级到 Pro 以添加无限客户',
+      'es': 'Actualiza a Pro para añadir clientes ilimitados',
+      'it': 'Passa a Pro per aggiungere clienti illimitati',
+      'de': 'Upgrade auf Pro für unbegrenzte Kunden',
+    });
+  }
+
+  static String orderLimitPaywallTitle(BuildContext context) {
+    return _pick(context, {
+      'en': 'Monthly order limit reached',
+      'ru': 'Достигнут месячный лимит заказов',
+      'uk': 'Досягнуто місячний ліміт замовлень',
+      'pl': 'Osiągnięto miesięczny limit zleceń',
+      'pt': 'Limite mensal de pedidos atingido',
+      'tr': 'Aylık sipariş limitine ulaşıldı',
+      'zh': '已达月度订单上限',
+      'es': 'Límite mensual de pedidos alcanzado',
+      'it': 'Limite mensile ordini raggiunto',
+      'de': 'Monatliches Auftragslimit erreicht',
+    });
+  }
+
+  static String orderLimitPaywallBody(BuildContext context) {
+    return _pick(context, {
+      'en': 'Upgrade to Pro for unlimited orders every month',
+      'ru': 'Перейдите на Pro для неограниченного числа заказов каждый месяц',
+      'uk': 'Перейдіть на Pro для необмеженої кількості замовлень щомісяця',
+      'pl': 'Przejdź na Pro dla nieograniczonej liczby zleceń każdego miesiąca',
+      'pt': 'Upgrade para Pro por pedidos ilimitados todo mês',
+      'tr': 'Her ay sınırsız sipariş için Pro\'ya geçin',
+      'zh': '升级到 Pro 每月享受无限订单',
+      'es': 'Actualiza a Pro por pedidos ilimitados cada mes',
+      'it': 'Passa a Pro per ordini illimitati ogni mese',
+      'de': 'Upgrade auf Pro für unbegrenzte Aufträge jeden Monat',
+    });
+  }
 }
