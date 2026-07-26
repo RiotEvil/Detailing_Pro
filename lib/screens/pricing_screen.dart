@@ -28,6 +28,7 @@ class PricingScreen extends StatefulWidget {
 
 class _PricingScreenState extends State<PricingScreen> {
   Map<AppPlan, String> _livePrices = {};
+  String? _trialLabel; // e.g. "7-day", "14-day", "1-month" from RevenueCat
   bool _pricesLoading = true;
   bool _purchasingPro = false;
   bool _purchasingBiz = false;
@@ -53,8 +54,13 @@ class _PricingScreenState extends State<PricingScreen> {
           proOffering?.monthly ??
           proOffering?.annual ??
           proOffering?.availablePackages.firstOrNull;
+      String? trialLabel;
       if (proPkg != null) {
         prices[AppPlan.pro] = proPkg.storeProduct.priceString;
+        final intro = proPkg.storeProduct.introductoryPrice;
+        if (intro != null && intro.price == 0) {
+          trialLabel = _parseFreeTrialLabel(intro.period);
+        }
       }
 
       final bizOffering = offerings.getOffering('business');
@@ -69,12 +75,34 @@ class _PricingScreenState extends State<PricingScreen> {
       if (mounted) {
         setState(() {
           _livePrices = prices;
+          _trialLabel = trialLabel;
           _pricesLoading = false;
         });
       }
     } catch (e) {
       debugPrint('[PricingScreen] loadLivePrices error: $e');
       if (mounted) setState(() => _pricesLoading = false);
+    }
+  }
+
+  static String? _parseFreeTrialLabel(String period) {
+    final match = RegExp(
+      r'^P(\d+)([DWMY])$',
+      caseSensitive: false,
+    ).firstMatch(period.trim());
+    if (match == null) return null;
+    final n = int.parse(match.group(1)!);
+    switch (match.group(2)!.toUpperCase()) {
+      case 'D':
+        return '$n-day';
+      case 'W':
+        return '${n * 7}-day';
+      case 'M':
+        return '$n-month';
+      case 'Y':
+        return '$n-year';
+      default:
+        return null;
     }
   }
 
@@ -279,6 +307,7 @@ class _PricingScreenState extends State<PricingScreen> {
                           isCurrentPlan: currentPlan == AppPlan.pro,
                           hasBusiness: currentPlan == AppPlan.business,
                           onPurchase: () => _purchasePlan(AppPlan.pro),
+                          trialLabel: _trialLabel,
                         ),
                         const SizedBox(height: 16),
 
@@ -380,6 +409,7 @@ class _ProPriceBlock extends StatelessWidget {
   final bool isCurrentPlan;
   final bool hasBusiness;
   final VoidCallback onPurchase;
+  final String? trialLabel;
 
   const _ProPriceBlock({
     required this.price,
@@ -388,6 +418,7 @@ class _ProPriceBlock extends StatelessWidget {
     required this.isCurrentPlan,
     required this.hasBusiness,
     required this.onPurchase,
+    this.trialLabel,
   });
 
   @override
@@ -483,7 +514,9 @@ class _ProPriceBlock extends StatelessWidget {
                         ),
                       )
                     : Text(
-                        SubscriptionTexts.trialCta(context),
+                        (trialLabel == null || trialLabel == '7-day')
+                            ? SubscriptionTexts.softPaywallCta(context)
+                            : 'Start $trialLabel free trial',
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
