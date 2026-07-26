@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Book a service — Detailing Pro</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #121212;
+      --surface: #1e1e1e;
+      --card: #2a2a2a;
+      --primary: #f59e0b;
+      --primary-dim: rgba(245,158,11,.15);
+      --text: #e8e8e8;
+      --muted: #888;
+      --border: rgba(255,255,255,.10);
+      --success: #4ade80;
+      --error: #f87171;
+      --radius: 12px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 0 0 60px;
+    }
+
+    .header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: var(--primary);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .header-text { flex: 1; min-width: 0; }
+    .studio-name { font-size: 15px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .header-sub  { font-size: 12px; color: var(--muted); }
+
+    .container { max-width: 480px; margin: 0 auto; padding: 20px 16px; }
+
+    /* ── States ── */
+    #state-loading, #state-unavailable, #state-success {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .state-icon { font-size: 48px; margin-bottom: 16px; }
+    .state-title { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+    .state-body  { color: var(--muted); font-size: 14px; line-height: 1.6; }
+
+    /* ── Form ── */
+    .section-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      letter-spacing: .8px;
+      text-transform: uppercase;
+      margin: 24px 0 10px;
+    }
+    .section-title:first-child { margin-top: 4px; }
+
+    .field { margin-bottom: 12px; }
+    .field label { display: block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+    .field input, .field textarea {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-size: 15px;
+      padding: 12px 14px;
+      outline: none;
+      transition: border-color .15s;
+      font-family: inherit;
+    }
+    .field input:focus, .field textarea:focus { border-color: var(--primary); }
+    .field textarea { resize: vertical; min-height: 80px; }
+    .field.error input, .field.error textarea { border-color: var(--error); }
+    .field .err-msg { font-size: 12px; color: var(--error); margin-top: 4px; display: none; }
+    .field.error .err-msg { display: block; }
+
+    /* ── Calendar ── */
+    .cal-nav {
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 14px;
+      margin-bottom: 8px;
+    }
+    .cal-nav button {
+      background: none; border: none; color: var(--text);
+      font-size: 20px; cursor: pointer; padding: 4px 8px;
+      border-radius: 8px; line-height: 1;
+    }
+    .cal-nav button:hover { background: var(--primary-dim); }
+    .cal-nav button:disabled { color: var(--border); cursor: default; }
+    .cal-month { font-weight: 600; font-size: 15px; }
+
+    .cal-grid {
+      display: grid; grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+    .cal-dow {
+      text-align: center; font-size: 11px; color: var(--muted);
+      padding: 4px 0; font-weight: 600;
+    }
+    .cal-day {
+      aspect-ratio: 1;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: default;
+      color: var(--muted);
+      transition: background .1s;
+    }
+    .cal-day.empty { background: none; }
+    .cal-day.past  { color: rgba(255,255,255,.2); }
+    .cal-day.available {
+      background: var(--primary-dim);
+      color: var(--primary);
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .cal-day.available:hover { background: rgba(245,158,11,.30); }
+    .cal-day.selected {
+      background: var(--primary) !important;
+      color: #000 !important;
+      font-weight: 700;
+    }
+    .cal-loading { text-align: center; padding: 24px; color: var(--muted); font-size: 13px; }
+    .cal-error   { text-align: center; padding: 16px; color: var(--error); font-size: 13px; }
+
+    /* ── Time slots ── */
+    .slots-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .slot-btn {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 10px 4px;
+      cursor: pointer;
+      text-align: center;
+      transition: background .1s, border-color .1s;
+    }
+    .slot-btn:hover  { background: var(--primary-dim); border-color: var(--primary); }
+    .slot-btn.sel    { background: var(--primary); border-color: var(--primary); color: #000; font-weight: 700; }
+    .no-slots { font-size: 13px; color: var(--muted); padding: 12px 0; }
+
+    /* ── Submit ── */
+    .submit-btn {
+      width: 100%;
+      background: var(--primary);
+      color: #000;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 16px;
+      font-weight: 700;
+      padding: 16px;
+      cursor: pointer;
+      margin-top: 24px;
+      transition: opacity .15s;
+    }
+    .submit-btn:disabled { opacity: .5; cursor: not-allowed; }
+    .submit-btn:not(:disabled):hover { opacity: .9; }
+
+    .req-note { font-size: 12px; color: var(--muted); text-align: center; margin-top: 12px; }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo-icon">🚗</div>
+  <div class="header-text">
+    <div class="studio-name" id="hdr-name">Detailing Pro</div>
+    <div class="header-sub" id="hdr-sub">Online booking</div>
+  </div>
+</div>
+
+<!-- Loading -->
+<div id="state-loading" class="container">
+  <div class="spinner"></div>
+  <div style="color:var(--muted);font-size:14px" id="txt-loading">Loading…</div>
+</div>
+
+<!-- Unavailable -->
+<div id="state-unavailable" class="container hidden">
+  <div class="state-icon">🔒</div>
+  <div class="state-title" id="txt-unavail-title">Booking unavailable</div>
+  <div class="state-body"  id="txt-unavail-body">Online booking is not set up for this studio yet.</div>
+</div>
+
+<!-- Success -->
+<div id="state-success" class="container hidden">
+  <div class="state-icon">✅</div>
+  <div class="state-title" id="txt-success-title">Request sent!</div>
+  <div class="state-body"  id="txt-success-body">The studio will confirm your booking shortly.</div>
+</div>
+
+<!-- Form -->
+<div id="state-form" class="container hidden">
+
+  <div class="section-title" id="lbl-your-info">YOUR INFORMATION</div>
+
+  <div class="field" id="f-name">
+    <label id="lbl-name">Your name *</label>
+    <input type="text" id="inp-name" autocomplete="name" />
+    <div class="err-msg" id="err-name">Required</div>
+  </div>
+
+  <div class="field" id="f-phone">
+    <label id="lbl-phone">Phone</label>
+    <input type="tel" id="inp-phone" autocomplete="tel" />
+    <div class="err-msg" id="err-phone">Invalid phone number</div>
+  </div>
+
+  <div class="field" id="f-email">
+    <label id="lbl-email">Email</label>
+    <input type="email" id="inp-email" autocomplete="email" />
+    <div class="err-msg" id="err-email">Invalid email</div>
+  </div>
+
+  <div class="section-title" id="lbl-service-info">SERVICE DETAILS</div>
+
+  <div class="field" id="f-service">
+    <label id="lbl-service">Service *</label>
+    <input type="text" id="inp-service" />
+    <div class="err-msg" id="err-service">Required</div>
+  </div>
+
+  <div class="field" id="f-car">
+    <label id="lbl-car">Car (model / plate) *</label>
+    <input type="text" id="inp-car" autocomplete="off" />
+    <div class="err-msg" id="err-car">Required</div>
+  </div>
+
+  <div class="section-title" id="lbl-date-hdr">DATE &amp; TIME</div>
+
+  <!-- Calendar -->
+  <div class="cal-nav">
+    <button id="btn-prev" onclick="shiftMonth(-1)">‹</button>
+    <span class="cal-month" id="cal-month-label"></span>
+    <button id="btn-next" onclick="shiftMonth(1)">›</button>
+  </div>
+  <div class="cal-grid" id="cal-grid"></div>
+  <div id="cal-status" class="cal-loading hidden"></div>
+  <div class="field hidden" style="margin-top:0" id="f-date">
+    <div class="err-msg" id="err-date" style="display:block">Please pick a date</div>
+  </div>
+
+  <!-- Time slots -->
+  <div id="slots-section" class="hidden" style="margin-top:16px">
+    <div class="section-title" id="lbl-time-hdr" style="margin-top:0">AVAILABLE TIMES</div>
+    <div id="slots-container"></div>
+    <div class="field hidden" id="f-time">
+      <div class="err-msg" id="err-time" style="display:block">Please pick a time</div>
+    </div>
+  </div>
+
+  <div class="field" id="f-note" style="margin-top:20px">
+    <label id="lbl-note">Note (optional)</label>
+    <textarea id="inp-note" rows="3"></textarea>
+  </div>
+
+  <button class="submit-btn" id="btn-submit" onclick="submitForm()">
+    <span id="btn-label">Send booking request</span>
+  </button>
+
+  <div class="req-note" id="txt-req-note">* required fields</div>
+</div>
+
+<script>
+// ── Config ────────────────────────────────────────────────────────────────────
+const FN_BASE = 'https://europe-west3-detailing-pro.cloudfunctions.net';
+const GET_AVAIL_URL  = FN_BASE + '/getBookingAvailability';
+const CREATE_URL     = FN_BASE + '/createBookingRequest';
+const SERVICE_MINUTES = 120; // default service duration
+
+// ── URL params ────────────────────────────────────────────────────────────────
+const params  = new URLSearchParams(location.search);
+const masterUid   = params.get('uid')     || '';
+const studioName  = params.get('name')    || 'Detailing Pro';
+const locale      = (params.get('locale') || 'en').slice(0, 2).toLowerCase();
+
+// ── i18n ─────────────────────────────────────────────────────────────────────
+const T = {
+  en: {
+    hdrSub:'Online booking', loading:'Loading…',
+    unavailTitle:'Booking unavailable', unavailBody:'Online booking is not set up for this studio yet.',
+    successTitle:'Request sent!', successBody:'The studio will confirm your booking shortly.',
+    yourInfo:'YOUR INFORMATION', serviceInfo:'SERVICE DETAILS', dateHdr:'DATE & TIME', timeHdr:'AVAILABLE TIMES',
+    name:'Your name *', phone:'Phone', email:'Email',
+    service:'Service *', car:'Car (model / plate) *', note:'Note (optional)',
+    submit:'Send booking request', sending:'Sending…',
+    req:'* required fields',
+    errRequired:'Required', errPhone:'Invalid phone number', errEmail:'Invalid email',
+    errDate:'Please select a date', errTime:'Please select a time',
+    errContact:'Please enter phone or email', errServer:'Server error. Please try again.',
+    noSlots:'No available times on this day.',
+    calLoading:'Loading available dates…', calError:'Could not load availability. Tap a date manually.',
+    dows:['Su','Mo','Tu','We','Th','Fr','Sa'],
+  },
+  ru: {
+    hdrSub:'Онлайн-запись', loading:'Загрузка…',
+    unavailTitle:'Запись недоступна', unavailBody:'Онлайн-запись ещё не настроена для этой студии.',
+    successTitle:'Заявка отправлена!', successBody:'Студия подтвердит запись в ближайшее время.',
+    yourInfo:'ВАШИ ДАННЫЕ', serviceInfo:'УСЛУГА', dateHdr:'ДАТА И ВРЕМЯ', timeHdr:'ДОСТУПНОЕ ВРЕМЯ',
+    name:'Ваше имя *', phone:'Телефон', email:'Email',
+    service:'Услуга *', car:'Автомобиль (модель / номер) *', note:'Примечание (необязательно)',
+    submit:'Отправить заявку', sending:'Отправка…',
+    req:'* обязательные поля',
+    errRequired:'Обязательное поле', errPhone:'Неверный номер телефона', errEmail:'Неверный email',
+    errDate:'Выберите дату', errTime:'Выберите время',
+    errContact:'Укажите телефон или email', errServer:'Ошибка сервера. Попробуйте ещё раз.',
+    noSlots:'Нет свободного времени на этот день.',
+    calLoading:'Загрузка доступных дат…', calError:'Не удалось загрузить расписание.',
+    dows:['Вс','Пн','Вт','Ср','Чт','Пт','Сб'],
+  },
+  uk: {
+    hdrSub:'Онлайн-запис', loading:'Завантаження…',
+    unavailTitle:'Запис недоступний', unavailBody:'Онлайн-запис ще не налаштовано для цієї студії.',
+    successTitle:'Заявку надіслано!', successBody:'Студія підтвердить запис найближчим часом.',
+    yourInfo:'ВАШІ ДАНІ', serviceInfo:'ПОСЛУГА', dateHdr:'ДАТА І ЧАС', timeHdr:'ДОСТУПНИЙ ЧАС',
+    name:"Ваше ім'я *", phone:'Телефон', email:'Email',
+    service:'Послуга *', car:'Авто (модель / номер) *', note:'Примітка (необов'язково)',
+    submit:'Надіслати заявку', sending:'Надсилання…',
+    req:'* обов'язкові поля',
+    errRequired:'Обов'язкове поле', errPhone:'Невірний номер телефону', errEmail:'Невірний email',
+    errDate:'Оберіть дату', errTime:'Оберіть час',
+    errContact:'Введіть телефон або email', errServer:'Помилка сервера. Спробуйте ще раз.',
+    noSlots:'Немає вільного часу на цей день.',
+    calLoading:'Завантаження доступних дат…', calError:'Не вдалося завантажити розклад.',
+    dows:['Нд','Пн','Вт','Ср','Чт','Пт','Сб'],
+  },
+  pl: {
+    hdrSub:'Rezerwacja online', loading:'Ładowanie…',
+    unavailTitle:'Rezerwacja niedostępna', unavailBody:'Rezerwacja online nie jest jeszcze skonfigurowana dla tego studia.',
+    successTitle:'Prośba wysłana!', successBody:'Studio potwierdzi Twoją rezerwację wkrótce.',
+    yourInfo:'TWOJE DANE', serviceInfo:'USŁUGA', dateHdr:'DATA I CZAS', timeHdr:'DOSTĘPNE GODZINY',
+    name:'Imię i nazwisko *', phone:'Telefon', email:'E-mail',
+    service:'Usługa *', car:'Samochód (model / nr rej.) *', note:'Uwaga (opcjonalnie)',
+    submit:'Wyślij prośbę', sending:'Wysyłanie…',
+    req:'* pola wymagane',
+    errRequired:'Pole wymagane', errPhone:'Nieprawidłowy numer telefonu', errEmail:'Nieprawidłowy e-mail',
+    errDate:'Wybierz datę', errTime:'Wybierz godzinę',
+    errContact:'Podaj telefon lub e-mail', errServer:'Błąd serwera. Spróbuj ponownie.',
+    noSlots:'Brak wolnych terminów w tym dniu.',
+    calLoading:'Ładowanie dostępnych dat…', calError:'Nie można załadować harmonogramu.',
+    dows:['Nd','Pn','Wt','Śr','Cz','Pt','So'],
+  },
+  de: {
+    hdrSub:'Online-Buchung', loading:'Laden…',
+    unavailTitle:'Buchung nicht verfügbar', unavailBody:'Die Online-Buchung ist für dieses Studio noch nicht eingerichtet.',
+    successTitle:'Anfrage gesendet!', successBody:'Das Studio wird Ihre Buchung in Kürze bestätigen.',
+    yourInfo:'IHRE DATEN', serviceInfo:'SERVICE', dateHdr:'DATUM & UHRZEIT', timeHdr:'VERFÜGBARE ZEITEN',
+    name:'Ihr Name *', phone:'Telefon', email:'E-Mail',
+    service:'Service *', car:'Auto (Modell / Kennzeichen) *', note:'Hinweis (optional)',
+    submit:'Buchungsanfrage senden', sending:'Senden…',
+    req:'* Pflichtfelder',
+    errRequired:'Pflichtfeld', errPhone:'Ungültige Telefonnummer', errEmail:'Ungültige E-Mail',
+    errDate:'Bitte Datum wählen', errTime:'Bitte Uhrzeit wählen',
+    errContact:'Bitte Telefon oder E-Mail angeben', errServer:'Serverfehler. Bitte erneut versuchen.',
+    noSlots:'Keine freien Zeiten an diesem Tag.',
+    calLoading:'Verfügbare Daten werden geladen…', calError:'Verfügbarkeit konnte nicht geladen werden.',
+    dows:['So','Mo','Di','Mi','Do','Fr','Sa'],
+  },
+  es: {
+    hdrSub:'Reserva online', loading:'Cargando…',
+    unavailTitle:'Reserva no disponible', unavailBody:'La reserva online aún no está configurada para este estudio.',
+    successTitle:'¡Solicitud enviada!', successBody:'El estudio confirmará tu reserva pronto.',
+    yourInfo:'TUS DATOS', serviceInfo:'SERVICIO', dateHdr:'FECHA Y HORA', timeHdr:'HORARIOS DISPONIBLES',
+    name:'Tu nombre *', phone:'Teléfono', email:'Email',
+    service:'Servicio *', car:'Vehículo (modelo / matrícula) *', note:'Nota (opcional)',
+    submit:'Enviar solicitud', sending:'Enviando…',
+    req:'* campos obligatorios',
+    errRequired:'Obligatorio', errPhone:'Número de teléfono inválido', errEmail:'Email inválido',
+    errDate:'Selecciona una fecha', errTime:'Selecciona una hora',
+    errContact:'Ingresa teléfono o email', errServer:'Error del servidor. Inténtalo de nuevo.',
+    noSlots:'No hay horarios disponibles este día.',
+    calLoading:'Cargando fechas disponibles…', calError:'No se pudo cargar la disponibilidad.',
+    dows:['Do','Lu','Ma','Mi','Ju','Vi','Sa'],
+  },
+  it: {
+    hdrSub:'Prenotazione online', loading:'Caricamento…',
+    unavailTitle:'Prenotazione non disponibile', unavailBody:'La prenotazione online non è ancora configurata per questo studio.',
+    successTitle:'Richiesta inviata!', successBody:'Lo studio confermerà la tua prenotazione a breve.',
+    yourInfo:'I TUOI DATI', serviceInfo:'SERVIZIO', dateHdr:'DATA E ORA', timeHdr:'ORARI DISPONIBILI',
+    name:'Il tuo nome *', phone:'Telefono', email:'Email',
+    service:'Servizio *', car:'Auto (modello / targa) *', note:'Nota (facoltativo)',
+    submit:'Invia richiesta', sending:'Invio…',
+    req:'* campi obbligatori',
+    errRequired:'Obbligatorio', errPhone:'Numero di telefono non valido', errEmail:'Email non valida',
+    errDate:'Seleziona una data', errTime:'Seleziona un orario',
+    errContact:'Inserisci telefono o email', errServer:'Errore del server. Riprova.',
+    noSlots:'Nessun orario disponibile in questo giorno.',
+    calLoading:'Caricamento date disponibili…', calError:'Impossibile caricare la disponibilità.',
+    dows:['Do','Lu','Ma','Me','Gi','Ve','Sa'],
+  },
+  pt: {
+    hdrSub:'Agendamento online', loading:'Carregando…',
+    unavailTitle:'Agendamento indisponível', unavailBody:'O agendamento online ainda não está configurado para este estúdio.',
+    successTitle:'Solicitação enviada!', successBody:'O estúdio confirmará seu agendamento em breve.',
+    yourInfo:'SEUS DADOS', serviceInfo:'SERVIÇO', dateHdr:'DATA E HORA', timeHdr:'HORÁRIOS DISPONÍVEIS',
+    name:'Seu nome *', phone:'Telefone', email:'Email',
+    service:'Serviço *', car:'Carro (modelo / placa) *', note:'Observação (opcional)',
+    submit:'Enviar solicitação', sending:'Enviando…',
+    req:'* campos obrigatórios',
+    errRequired:'Obrigatório', errPhone:'Número de telefone inválido', errEmail:'Email inválido',
+    errDate:'Selecione uma data', errTime:'Selecione um horário',
+    errContact:'Informe telefone ou email', errServer:'Erro do servidor. Tente novamente.',
+    noSlots:'Sem horários disponíveis neste dia.',
+    calLoading:'Carregando datas disponíveis…', calError:'Não foi possível carregar a disponibilidade.',
+    dows:['Do','Se','Te','Qu','Qu','Se','Sa'],
+  },
+  tr: {
+    hdrSub:'Online randevu', loading:'Yükleniyor…',
+    unavailTitle:'Randevu mevcut değil', unavailBody:'Bu stüdyo için online randevu henüz ayarlanmamış.',
+    successTitle:'Talep gönderildi!', successBody:'Stüdyo randevunuzu yakında onaylayacak.',
+    yourInfo:'BİLGİLERİNİZ', serviceInfo:'HİZMET', dateHdr:'TARİH VE SAAT', timeHdr:'UYGUN SAATLER',
+    name:'Adınız *', phone:'Telefon', email:'E-posta',
+    service:'Hizmet *', car:'Araç (model / plaka) *', note:'Not (isteğe bağlı)',
+    submit:'Randevu talebi gönder', sending:'Gönderiliyor…',
+    req:'* zorunlu alanlar',
+    errRequired:'Zorunlu alan', errPhone:'Geçersiz telefon numarası', errEmail:'Geçersiz e-posta',
+    errDate:'Lütfen bir tarih seçin', errTime:'Lütfen bir saat seçin',
+    errContact:'Telefon veya e-posta girin', errServer:'Sunucu hatası. Lütfen tekrar deneyin.',
+    noSlots:'Bu günde uygun saat yok.',
+    calLoading:'Müsait tarihler yükleniyor…', calError:'Müsaitlik yüklenemedi.',
+    dows:['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'],
+  },
+  zh: {
+    hdrSub:'在线预约', loading:'加载中…',
+    unavailTitle:'预约不可用', unavailBody:'该工作室尚未开放在线预约。',
+    successTitle:'请求已发送！', successBody:'工作室将尽快确认您的预约。',
+    yourInfo:'您的信息', serviceInfo:'服务详情', dateHdr:'日期和时间', timeHdr:'可用时段',
+    name:'您的姓名 *', phone:'电话', email:'邮箱',
+    service:'服务 *', car:'车辆（型号/车牌）*', note:'备注（选填）',
+    submit:'发送预约请求', sending:'发送中…',
+    req:'* 必填项',
+    errRequired:'必填', errPhone:'无效的电话号码', errEmail:'无效的邮箱',
+    errDate:'请选择日期', errTime:'请选择时间',
+    errContact:'请输入电话或邮箱', errServer:'服务器错误，请重试。',
+    noSlots:'该天无可用时段。',
+    calLoading:'加载可用日期…', calError:'无法加载排期。',
+    dows:['日','一','二','三','四','五','六'],
+  },
+};
+
+const t = T[locale] || T.en;
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function $(id) { return document.getElementById(id); }
+
+function showState(name) {
+  ['loading','unavailable','success','form'].forEach(s =>
+    $('state-' + s).classList.toggle('hidden', s !== name)
+  );
+}
+
+function applyTranslations() {
+  $('hdr-name').textContent = studioName;
+  $('hdr-sub').textContent  = t.hdrSub;
+  $('txt-loading').textContent         = t.loading;
+  $('txt-unavail-title').textContent   = t.unavailTitle;
+  $('txt-unavail-body').textContent    = t.unavailBody;
+  $('txt-success-title').textContent   = t.successTitle;
+  $('txt-success-body').textContent    = t.successBody;
+  $('lbl-your-info').textContent  = t.yourInfo;
+  $('lbl-service-info').textContent = t.serviceInfo;
+  $('lbl-date-hdr').textContent   = t.dateHdr;
+  $('lbl-time-hdr').textContent   = t.timeHdr;
+  $('lbl-name').textContent   = t.name;
+  $('lbl-phone').textContent  = t.phone;
+  $('lbl-email').textContent  = t.email;
+  $('lbl-service').textContent = t.service;
+  $('lbl-car').textContent    = t.car;
+  $('lbl-note').textContent   = t.note;
+  $('btn-label').textContent  = t.submit;
+  $('txt-req-note').textContent = t.req;
+  $('err-name').textContent   = t.errRequired;
+  $('err-service').textContent = t.errRequired;
+  $('err-car').textContent    = t.errRequired;
+  $('err-phone').textContent  = t.errPhone;
+  $('err-email').textContent  = t.errEmail;
+  $('err-date').textContent   = t.errDate;
+  $('err-time').textContent   = t.errTime;
+  document.documentElement.lang = locale;
+  document.title = studioName + ' — ' + t.hdrSub;
+}
+
+// ── Calendar state ────────────────────────────────────────────────────────────
+const today = new Date();
+today.setHours(0,0,0,0);
+let viewYear  = today.getFullYear();
+let viewMonth = today.getMonth(); // 0-based
+let availCache = {}; // "YYYY-MM" -> {availableDates:[], slotsByDate:{}}
+let selectedDate = null; // "YYYY-MM-DD"
+let selectedTime = null; // "HH:MM"
+
+function monthKey(y, m) {
+  return y + '-' + String(m + 1).padStart(2,'0');
+}
+
+function toYMD(d) {
+  return d.getFullYear() + '-' +
+    String(d.getMonth()+1).padStart(2,'0') + '-' +
+    String(d.getDate()).padStart(2,'0');
+}
+
+function monthLabel(y, m) {
+  const d = new Date(y, m, 1);
+  return d.toLocaleString(locale === 'zh' ? 'zh-CN' : locale, {month:'long', year:'numeric'});
+}
+
+async function fetchMonth(y, m) {
+  const key = monthKey(y, m);
+  if (availCache[key]) return availCache[key];
+
+  $('cal-status').textContent = t.calLoading;
+  $('cal-status').classList.remove('hidden');
+  $('cal-status').className = 'cal-loading';
+
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Warsaw';
+  const url = `${GET_AVAIL_URL}?masterUid=${encodeURIComponent(masterUid)}&month=${key}&timezone=${encodeURIComponent(tz)}&serviceMinutes=${SERVICE_MINUTES}`;
+
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      const body = await res.json().catch(() => ({}));
+      if (res.status === 403 && body.error === 'online-booking-not-available') {
+        showState('unavailable');
+        return null;
+      }
+      throw new Error(body.error || res.status);
+    }
+    const data = await res.json();
+    availCache[key] = data;
+    $('cal-status').classList.add('hidden');
+    return data;
+  } catch (e) {
+    $('cal-status').textContent = t.calError;
+    $('cal-status').className = 'cal-error';
+    console.error('getBookingAvailability error:', e);
+    availCache[key] = { availableDates: [], slotsByDate: {} };
+    return availCache[key];
+  }
+}
+
+function renderCalendar(data) {
+  const avail = new Set(data ? data.availableDates : []);
+  const key = monthKey(viewYear, viewMonth);
+
+  // Update month label
+  $('cal-month-label').textContent = monthLabel(viewYear, viewMonth);
+
+  // Disable prev if current month
+  const nowKey = monthKey(today.getFullYear(), today.getMonth());
+  $('btn-prev').disabled = key <= nowKey;
+
+  // Build grid
+  const grid = $('cal-grid');
+  grid.innerHTML = '';
+
+  // Day-of-week headers
+  t.dows.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'cal-dow';
+    el.textContent = d;
+    grid.appendChild(el);
+  });
+
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+
+  // Empty cells before first day
+  for (let i = 0; i < firstDay; i++) {
+    const el = document.createElement('div');
+    el.className = 'cal-day empty';
+    grid.appendChild(el);
+  }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const el   = document.createElement('div');
+    const ymd  = monthKey(viewYear, viewMonth) + '-' + String(day).padStart(2,'0');
+    const date = new Date(viewYear, viewMonth, day);
+    el.textContent = day;
+
+    if (date < today) {
+      el.className = 'cal-day past';
+    } else if (avail.has(ymd)) {
+      el.className = 'cal-day available' + (ymd === selectedDate ? ' selected' : '');
+      el.onclick = () => selectDate(ymd, data);
+    } else {
+      el.className = 'cal-day';
+    }
+    grid.appendChild(el);
+  }
+}
+
+function selectDate(ymd, data) {
+  selectedDate = ymd;
+  selectedTime = null;
+  $('f-date').classList.add('hidden');
+
+  // Re-render calendar to update selection highlight
+  renderCalendar(data);
+
+  // Render time slots
+  const slots = data.slotsByDate ? (data.slotsByDate[ymd] || []) : [];
+  renderSlots(slots);
+  $('slots-section').classList.remove('hidden');
+}
+
+function renderSlots(slots) {
+  const container = $('slots-container');
+  container.innerHTML = '';
+  $('f-time').classList.add('hidden');
+
+  if (!slots.length) {
+    const msg = document.createElement('div');
+    msg.className = 'no-slots';
+    msg.textContent = t.noSlots;
+    container.appendChild(msg);
+    return;
+  }
+
+  const grid = document.createElement('div');
+  grid.className = 'slots-grid';
+  slots.forEach(time => {
+    const btn = document.createElement('button');
+    btn.className = 'slot-btn' + (time === selectedTime ? ' sel' : '');
+    btn.textContent = time;
+    btn.onclick = () => {
+      selectedTime = time;
+      container.querySelectorAll('.slot-btn').forEach(b => b.classList.remove('sel'));
+      btn.classList.add('sel');
+      $('f-time').classList.add('hidden');
+    };
+    grid.appendChild(btn);
+  });
+  container.appendChild(grid);
+}
+
+async function shiftMonth(delta) {
+  viewMonth += delta;
+  if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+  if (viewMonth < 0)  { viewMonth = 11; viewYear--; }
+
+  // Don't go before current month
+  const nowKey = monthKey(today.getFullYear(), today.getMonth());
+  if (monthKey(viewYear, viewMonth) < nowKey) {
+    viewYear  = today.getFullYear();
+    viewMonth = today.getMonth();
+  }
+
+  renderCalendar(null); // show skeleton immediately
+  const data = await fetchMonth(viewYear, viewMonth);
+  renderCalendar(data);
+}
+
+// ── Form validation & submit ──────────────────────────────────────────────────
+function setErr(fieldId, show) {
+  $('f-' + fieldId).classList.toggle('error', show);
+}
+
+function validatePhone(v) {
+  if (!v) return true; // optional
+  return /^[0-9+()\-.\s]{5,30}$/.test(v);
+}
+function validateEmail(v) {
+  if (!v) return true; // optional
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+}
+
+async function submitForm() {
+  const name    = $('inp-name').value.trim();
+  const phone   = $('inp-phone').value.trim();
+  const email   = $('inp-email').value.trim();
+  const service = $('inp-service').value.trim();
+  const car     = $('inp-car').value.trim();
+  const note    = $('inp-note').value.trim();
+
+  let ok = true;
+
+  if (!name)    { setErr('name', true);    ok = false; } else { setErr('name', false); }
+  if (!service) { setErr('service', true); ok = false; } else { setErr('service', false); }
+  if (!car)     { setErr('car', true);     ok = false; } else { setErr('car', false); }
+
+  if (!validatePhone(phone)) { setErr('phone', true); ok = false; } else { setErr('phone', false); }
+  if (!validateEmail(email)) { setErr('email', true); ok = false; } else { setErr('email', false); }
+
+  if (!selectedDate) { $('f-date').classList.remove('hidden'); ok = false; }
+  else                { $('f-date').classList.add('hidden'); }
+
+  if (!selectedTime) { $('f-time').classList.remove('hidden'); ok = false; }
+  else                { $('f-time').classList.add('hidden'); }
+
+  if (!ok) return;
+
+  const btn = $('btn-submit');
+  btn.disabled = true;
+  $('btn-label').textContent = t.sending;
+
+  const body = {
+    masterUid,
+    clientName: name,
+    service,
+    car,
+    preferredDate: selectedDate,
+    preferredTime: selectedTime,
+    source: 'web-booking',
+    locale: locale || 'en',
+  };
+  if (phone) body.clientPhone = phone;
+  if (email) body.clientEmail = email;
+  if (note)  body.note = note;
+
+  try {
+    const res = await fetch(CREATE_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || res.status);
+    }
+
+    showState('success');
+  } catch (e) {
+    console.error('createBookingRequest error:', e);
+    alert(t.errServer);
+    btn.disabled = false;
+    $('btn-label').textContent = t.submit;
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+async function init() {
+  applyTranslations();
+
+  if (!masterUid) {
+    showState('unavailable');
+    return;
+  }
+
+  showState('loading');
+  renderCalendar(null);
+
+  const data = await fetchMonth(viewYear, viewMonth);
+  if (!data) return; // showed unavailable state inside fetchMonth
+
+  renderCalendar(data);
+  showState('form');
+}
+
+init();
+</script>
+</body>
+</html>
