@@ -981,7 +981,8 @@ exports.ensureOrgQuotas = onRequest(
 exports.setBusinessMode = onRequest(
   {
     region: REGION,
-    memory: "256MiB",
+    memory: "512MiB",
+    minInstances: 1,
     maxInstances: 5,
     invoker: "public",
   },
