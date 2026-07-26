@@ -47,12 +47,12 @@ void main() {
   group('AccessGuard.canCreateClient', () {
     test('free plan: allows when below limit', () async {
       await _setPlan(AppPlan.free, PlanStatus.inactive);
-      expect(AccessGuard.canCreateClient(existingClientsCount: 19), isTrue);
+      expect(AccessGuard.canCreateClient(existingClientsCount: 4), isTrue);
     });
 
-    test('free plan: blocks at exact limit (20)', () async {
+    test('free plan: blocks at exact limit (5)', () async {
       await _setPlan(AppPlan.free, PlanStatus.inactive);
-      expect(AccessGuard.canCreateClient(existingClientsCount: 20), isFalse);
+      expect(AccessGuard.canCreateClient(existingClientsCount: 5), isFalse);
     });
 
     test('free plan: blocks above limit', () async {
@@ -90,11 +90,11 @@ void main() {
 
     test('pro + inactive status still enforces limits', () async {
       await _setPlan(AppPlan.pro, PlanStatus.inactive);
-      expect(AccessGuard.canCreateClient(existingClientsCount: 20), isFalse);
+      expect(AccessGuard.canCreateClient(existingClientsCount: 5), isFalse);
     });
 
-    test('limit constant is 20', () {
-      expect(AccessGuard.freeClientsLimit, 20);
+    test('limit constant is 5', () {
+      expect(AccessGuard.freeClientsLimit, 5);
     });
   });
 
@@ -102,15 +102,15 @@ void main() {
     test('free plan: allows when below limit', () async {
       await _setPlan(AppPlan.free, PlanStatus.inactive);
       expect(
-        AccessGuard.canCreateOrderThisMonth(activeOrdersThisMonthCount: 9),
+        AccessGuard.canCreateOrderThisMonth(activeOrdersThisMonthCount: 2),
         isTrue,
       );
     });
 
-    test('free plan: blocks at exact limit (10)', () async {
+    test('free plan: blocks at exact limit (3)', () async {
       await _setPlan(AppPlan.free, PlanStatus.inactive);
       expect(
-        AccessGuard.canCreateOrderThisMonth(activeOrdersThisMonthCount: 10),
+        AccessGuard.canCreateOrderThisMonth(activeOrdersThisMonthCount: 3),
         isFalse,
       );
     });
@@ -150,8 +150,8 @@ void main() {
       );
     });
 
-    test('limit constant is 10', () {
-      expect(AccessGuard.freeActiveOrdersPerMonthLimit, 10);
+    test('limit constant is 3', () {
+      expect(AccessGuard.freeActiveOrdersPerMonthLimit, 3);
     });
   });
 
