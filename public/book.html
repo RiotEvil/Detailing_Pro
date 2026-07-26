@@ -355,10 +355,10 @@ const T = {
     successTitle:'Заявку надіслано!', successBody:'Студія підтвердить запис найближчим часом.',
     yourInfo:'ВАШІ ДАНІ', serviceInfo:'ПОСЛУГА', dateHdr:'ДАТА І ЧАС', timeHdr:'ДОСТУПНИЙ ЧАС',
     name:"Ваше ім'я *", phone:'Телефон', email:'Email',
-    service:'Послуга *', car:'Авто (модель / номер) *', note:'Примітка (необов'язково)',
+    service:'Послуга *', car:'Авто (модель / номер) *', note:"Примітка (необов'язково)",
     submit:'Надіслати заявку', sending:'Надсилання…',
-    req:'* обов'язкові поля',
-    errRequired:'Обов'язкове поле', errPhone:'Невірний номер телефону', errEmail:'Невірний email',
+    req:"* обов'язкові поля",
+    errRequired:"Обов'язкове поле", errPhone:'Невірний номер телефону', errEmail:'Невірний email',
     errDate:'Оберіть дату', errTime:'Оберіть час',
     errContact:'Введіть телефон або email', errServer:'Помилка сервера. Спробуйте ще раз.',
     noSlots:'Немає вільного часу на цей день.',
@@ -556,21 +556,25 @@ async function fetchMonth(y, m) {
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/Warsaw';
   const url = `${GET_AVAIL_URL}?masterUid=${encodeURIComponent(masterUid)}&month=${key}&timezone=${encodeURIComponent(tz)}&serviceMinutes=${SERVICE_MINUTES}`;
 
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 15000);
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { signal: ctrl.signal });
+    clearTimeout(timer);
     if (!res.ok) {
       const body = await res.json().catch(() => ({}));
       if (res.status === 403 && body.error === 'online-booking-not-available') {
         showState('unavailable');
         return null;
       }
-      throw new Error(body.error || res.status);
+      throw new Error(body.error || String(res.status));
     }
     const data = await res.json();
     availCache[key] = data;
     $('cal-status').classList.add('hidden');
     return data;
   } catch (e) {
+    clearTimeout(timer);
     $('cal-status').textContent = t.calError;
     $('cal-status').className = 'cal-error';
     console.error('getBookingAvailability error:', e);
@@ -771,21 +775,27 @@ async function submitForm() {
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
-  applyTranslations();
+  try {
+    applyTranslations();
 
-  if (!masterUid) {
-    showState('unavailable');
-    return;
+    if (!masterUid) {
+      showState('unavailable');
+      return;
+    }
+
+    showState('loading');
+
+    const data = await fetchMonth(viewYear, viewMonth);
+    if (data === null) return; // 403 — fetchMonth already showed 'unavailable'
+
+    renderCalendar(data);
+    showState('form');
+  } catch (e) {
+    console.error('init error:', e);
+    // Show form with empty calendar so user sees the page rather than infinite spinner
+    renderCalendar({ availableDates: [], slotsByDate: {} });
+    showState('form');
   }
-
-  showState('loading');
-  renderCalendar(null);
-
-  const data = await fetchMonth(viewYear, viewMonth);
-  if (!data) return; // showed unavailable state inside fetchMonth
-
-  renderCalendar(data);
-  showState('form');
 }
 
 init();
