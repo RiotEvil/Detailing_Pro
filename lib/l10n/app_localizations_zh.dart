@@ -1462,4 +1462,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsSyncDiscardButton => '丢弃失败的更改';
+
+  @override
+  String get serverErrorRetry => '服务器错误。请30秒后重试。';
 }

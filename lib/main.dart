@@ -533,7 +533,10 @@ class _AuthGateState extends State<AuthGate> with WidgetsBindingObserver {
 
       if (!mounted) return;
       final l10n = AppLocalizations.of(context);
-      final message = l10n?.errorMessage(e.toString()) ?? e.toString();
+      final isServerError = e.toString().contains('serverUnavailable');
+      final message = isServerError
+          ? (l10n?.serverErrorRetry ?? 'Server error. Please try again in 30 seconds.')
+          : (l10n?.errorMessage(e.toString()) ?? e.toString());
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(message)));

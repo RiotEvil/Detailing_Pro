@@ -1510,4 +1510,8 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get settingsSyncDiscardButton => 'Descartar alterações com falha';
+
+  @override
+  String get serverErrorRetry =>
+      'Erro do servidor. Tente novamente em 30 segundos.';
 }

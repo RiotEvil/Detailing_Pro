@@ -1502,4 +1502,8 @@ class AppLocalizationsTr extends AppLocalizations {
 
   @override
   String get settingsSyncDiscardButton => 'Başarısız değişiklikleri sil';
+
+  @override
+  String get serverErrorRetry =>
+      'Sunucu hatası. Lütfen 30 saniye sonra tekrar deneyin.';
 }

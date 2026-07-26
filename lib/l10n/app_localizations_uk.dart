@@ -1510,4 +1510,7 @@ class AppLocalizationsUk extends AppLocalizations {
 
   @override
   String get settingsSyncDiscardButton => 'Видалити невдалі зміни';
+
+  @override
+  String get serverErrorRetry => 'Помилка сервера. Спробуйте через 30 секунд.';
 }

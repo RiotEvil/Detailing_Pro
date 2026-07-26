@@ -460,6 +460,7 @@
   "settingsSyncPendingMessage": "有 {count} 项更改等待同步",
   "settingsSyncFailedMessage": "有 {count} 项更改未能同步到云端",
   "settingsSyncRetryButton": "重试同步",
-  "settingsSyncDiscardButton": "丢弃失败的更改"
+  "settingsSyncDiscardButton": "丢弃失败的更改",
+  "serverErrorRetry": "服务器错误。请30秒后重试。"
 }
 

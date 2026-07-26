@@ -1508,4 +1508,8 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsSyncDiscardButton => 'Discard failed changes';
+
+  @override
+  String get serverErrorRetry =>
+      'Server error. Please try again in 30 seconds.';
 }

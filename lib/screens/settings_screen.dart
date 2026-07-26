@@ -618,9 +618,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         return;
       }
 
+      final isServerError = e.toString().contains('serverUnavailable');
+      final errMsg = isServerError
+          ? l10n.serverErrorRetry
+          : l10n.errorMessage(e.toString());
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text(l10n.errorMessage(e.toString()))));
+      ).showSnackBar(SnackBar(content: Text(errMsg)));
       return;
     }
 

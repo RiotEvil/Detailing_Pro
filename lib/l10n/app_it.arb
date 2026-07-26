@@ -460,6 +460,7 @@
   "settingsSyncPendingMessage": "{count} modifiche in attesa di sync",
   "settingsSyncFailedMessage": "{count} modifiche non sincronizzate",
   "settingsSyncRetryButton": "Riprova sync",
-  "settingsSyncDiscardButton": "Elimina modifiche fallite"
+  "settingsSyncDiscardButton": "Elimina modifiche fallite",
+  "serverErrorRetry": "Errore del server. Riprovare tra 30 secondi."
 }
 

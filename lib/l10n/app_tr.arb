@@ -460,6 +460,7 @@
   "settingsSyncPendingMessage": "Senkronize edilmeyi bekleyen {count} değişiklik",
   "settingsSyncFailedMessage": "{count} değişiklik buluta senkronize edilemedi",
   "settingsSyncRetryButton": "Senkronizasyonu tekrar dene",
-  "settingsSyncDiscardButton": "Başarısız değişiklikleri sil"
+  "settingsSyncDiscardButton": "Başarısız değişiklikleri sil",
+  "serverErrorRetry": "Sunucu hatası. Lütfen 30 saniye sonra tekrar deneyin."
 }
 

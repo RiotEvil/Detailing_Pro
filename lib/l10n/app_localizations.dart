@@ -2884,6 +2884,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Discard failed changes'**
   String get settingsSyncDiscardButton;
+
+  /// No description provided for @serverErrorRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Server error. Please try again in 30 seconds.'**
+  String get serverErrorRetry;
 }
 
 class _AppLocalizationsDelegate

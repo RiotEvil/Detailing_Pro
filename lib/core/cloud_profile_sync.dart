@@ -77,6 +77,7 @@ class CloudProfileSync {
 
   /// Calls the `setBusinessMode` Cloud Function to write privilege-sensitive
   /// fields (`orgId`, `role`, `businessMode`) to `users` and `public_users`.
+  /// Retries up to 3 times with a 2-second delay for 5xx server errors.
   static Future<void> _callSetBusinessMode(User user, BusinessMode mode) async {
     final projectId = Firebase.app().options.projectId;
     if (projectId.isEmpty) {
@@ -96,27 +97,50 @@ class CloudProfileSync {
     final uri = Uri.parse(
       'https://$_functionsRegion-$projectId.cloudfunctions.net/setBusinessMode',
     );
-    final client = HttpClient()
-      ..connectionTimeout = const Duration(seconds: 15);
 
-    try {
-      final request = await client.postUrl(uri);
-      request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $idToken');
-      request.headers.contentType = ContentType.json;
-      request.add(utf8.encode(jsonEncode({'mode': mode.name})));
+    const maxAttempts = 3;
+    for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+      final client = HttpClient()
+        ..connectionTimeout = const Duration(seconds: 15);
+      try {
+        final request = await client.postUrl(uri);
+        request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $idToken');
+        request.headers.contentType = ContentType.json;
+        request.add(utf8.encode(jsonEncode({'mode': mode.name})));
 
-      final response = await request.close().timeout(
-        const Duration(seconds: 15),
-      );
-      final body = await utf8.decoder.bind(response).join();
+        final response = await request.close().timeout(
+          const Duration(seconds: 15),
+        );
+        if (response.statusCode == 200) {
+          await response.drain<void>();
+          return;
+        }
 
-      if (response.statusCode != 200) {
-        throw Exception('setBusinessMode failed: ${response.statusCode} $body');
+        final isServerError = response.statusCode >= 500;
+        if (isServerError && attempt < maxAttempts) {
+          await Future.delayed(const Duration(seconds: 2));
+          continue;
+        }
+
+        // Non-retryable or exhausted retries — throw clean message without HTML body.
+        if (isServerError) {
+          throw Exception('serverUnavailable');
+        }
+        throw Exception('setBusinessMode failed: ${response.statusCode}');
+      } on Exception catch (e) {
+        if (e.toString().contains('serverUnavailable') ||
+            e.toString().contains('setBusinessMode failed:')) {
+          rethrow;
+        }
+        // Network/timeout error — retry if attempts remain.
+        if (attempt < maxAttempts) {
+          await Future.delayed(const Duration(seconds: 2));
+          continue;
+        }
+        rethrow;
+      } finally {
+        client.close(force: true);
       }
-    } catch (e) {
-      rethrow;
-    } finally {
-      client.close(force: true);
     }
   }
 

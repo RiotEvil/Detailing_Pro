@@ -468,7 +468,8 @@
   "settingsSyncPendingMessage": "Ожидают синхронизации: {count}",
   "settingsSyncFailedMessage": "Не удалось синхронизировать: {count}",
   "settingsSyncRetryButton": "Повторить синхронизацию",
-  "settingsSyncDiscardButton": "Удалить неудачные изменения"
+  "settingsSyncDiscardButton": "Удалить неудачные изменения",
+  "serverErrorRetry": "Ошибка сервера. Попробуйте через 30 секунд."
 }
 
 

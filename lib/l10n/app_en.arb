@@ -470,6 +470,7 @@
     }
   },
   "settingsSyncRetryButton": "Retry sync",
-  "settingsSyncDiscardButton": "Discard failed changes"
+  "settingsSyncDiscardButton": "Discard failed changes",
+  "serverErrorRetry": "Server error. Please try again in 30 seconds."
 }
 

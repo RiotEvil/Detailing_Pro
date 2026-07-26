@@ -460,6 +460,7 @@
   "settingsSyncPendingMessage": "{count} cambios pendientes de sincronizar",
   "settingsSyncFailedMessage": "{count} cambios no se pudieron sincronizar",
   "settingsSyncRetryButton": "Reintentar sincronización",
-  "settingsSyncDiscardButton": "Descartar cambios fallidos"
+  "settingsSyncDiscardButton": "Descartar cambios fallidos",
+  "serverErrorRetry": "Error del servidor. Por favor, inténtelo de nuevo en 30 segundos."
 }
 
